@@ -18,7 +18,7 @@ void read_board(std::ifstream& fin) {
     fin >> player;
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
-            fin >> board[i][j];//tyty
+            fin >> board[i][j];
         }
     }
 }
