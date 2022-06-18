@@ -12,7 +12,31 @@ enum SPOT_STATE {
 
 int player;
 const int SIZE = 15;
+int depth; //initialize ,deeper win
 std::array<std::array<int, SIZE>, SIZE> board;
+
+struct State_Value {
+    //chess state
+    std::array<std::array<int, SIZE>, SIZE> cs;
+    //score               
+    int a, b;
+    //setup state and value
+    State_Value() {                                           
+        for(int i = 0; i < SIZE; i++) {
+            for(int j = 0; j < SIZE; j++) {
+                cs[i][j] = board[i][j];
+            }
+        }
+    }
+    void setHeuristic() {
+
+    }
+    void update(int x, int y) {
+        board[x][y] = BLACK;
+    }
+
+
+};
 
 void read_board(std::ifstream& fin) {
     fin >> player;
