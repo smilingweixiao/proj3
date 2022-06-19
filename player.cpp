@@ -4,6 +4,7 @@
 #include <ctime>
 #include <array>
 #include <algorithm>
+#include <set>
 
 using namespace std;
 
@@ -20,28 +21,32 @@ std::array<std::array<int, SIZE>, SIZE> board;
 
 int dx[4] = {0,1,1,1};
 int dy[4] = {1,0,1,-1};
-const int dep = 2;
+const int dep = 4;
+int m, n;
 
 struct Point {
     int x;
     int y;
 };
-Point best;
 
 struct Node {
     std::array<std::array<int, SIZE>, SIZE> bd;    //bd
     int isline[SIZE][SIZE][4];
     int alpha, beta;
+    int cnt;
     Node() {
+        cnt = 0;
         alpha = INT32_MIN;
         beta = INT32_MAX;
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
                 bd[i][j] = board[i][j];
+                if(bd[i][j] == player) cnt++;
             }
         }
     }
     Node(Node node, int x, int y, int color) {
+        cnt = 0;
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
                 bd[i][j] = node.bd[i][j];
@@ -67,7 +72,7 @@ struct Node {
             for (int j = 0; j < SIZE; j++) {
                 for (int k = 0; k < 4; k++) {
                     if(isline[i][j][k]) continue;
-                    if(!board[i][j]) continue;
+                    if(board[i][j] == EMPTY) continue;
                     new1_x = i+dx[k]; new2_x = i+dx[k]*2; 
                     new3_x = i+dx[k]*3; new4_x = i+dx[k]*4;
                     new1_y = j+dy[k]; new2_y = j+dy[k]*2;
@@ -76,24 +81,24 @@ struct Node {
                         if(bd[i][j] == bd[new1_x][new1_y] && bd[i][j] == bd[new2_x][new2_y]){
                             val++;
                             isline[i][j][k] = isline[new1_x][new1_y][k] = isline[new2_x][new2_y][k] = 1;
-                            if(new3_x >= 0 && new3_x < SIZE && new3_y >= 0 && new3_y < SIZE && bd[new3_x][new3_y] == bd[i][j]) {
-                                isline[new3_x][new3_y][k] = 1;
+                            if(new3_x >= 0 && new3_x < SIZE && new3_y >= 0 && new3_y < SIZE) {
+                                if(bd[i][j] == bd[new3_x][new3_y])
+                                    isline[new3_x][new3_y][k] = 1;
                             }
-                            if(new4_x >= 0 && new4_x < SIZE && new4_y >= 0 && new4_y < SIZE && bd[new4_x][new4_y] == bd[i][j]) {
-                                isline[new4_x][new4_y][k] = 1;
+                            if(new4_x >= 0 && new4_x < SIZE && new4_y >= 0 && new4_y < SIZE) {
+                                if(bd[i][j] == bd[new4_x][new4_y])
+                                    isline[new4_x][new4_y][k] = 1;
                             }
                             
                         }
                     }
-                    else if(new2_x>=0 && new2_x<SIZE && new2_y>=0 && new2_y<SIZE) {
+                    else if(new3_x>=0 && new3_x<SIZE && new3_y>=0 && new3_y<SIZE) {
                         if(bd[i][j] == bd[new1_x][new1_y] && bd[i][j] == bd[new2_x][new2_y]){
                             val--;
                             isline[i][j][k] = isline[new1_x][new1_y][k] = isline[new2_x][new2_y][k] = 1;
-                            if(new3_x >= 0 && new3_x < SIZE && new3_y >= 0 && new3_y < SIZE) {
-                                isline[new3_x][new3_y][k] = 1;
-                            }
                             if(new4_x >= 0 && new4_x < SIZE && new4_y >= 0 && new4_y < SIZE) {
-                                isline[new4_x][new4_y][k] = 1;
+                                if(bd[i][j] == bd[new4_x][new4_y])
+                                    isline[new4_x][new4_y][k] = 1;
                             }
                             
                         }
@@ -115,6 +120,11 @@ int alphabeta(Node node, int depth, bool user) {
             for (int j = 0; j < SIZE; j++) {
                 if(node.bd[i][j] != EMPTY) continue;
                 val = max(val, alphabeta(Node(node, i, j, player), depth-1, false));
+                if(val > node.alpha && depth == dep) {
+                    m = i;
+                    n = j;
+                    //cout << m << n << endl;
+                }
                 node.alpha = max(node.alpha, val);
                 if(node.alpha >= node.beta) break;
             }
@@ -142,7 +152,6 @@ void read_board(std::ifstream& fin) {
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             fin >> board[i][j];
-            fin >> board[i][j];
         }
     }
     if(player == BLACK) opponent = WHITE;
@@ -150,40 +159,54 @@ void read_board(std::ifstream& fin) {
 }
 void write_valid_spot(std::ofstream& fout, std::ifstream& fin) {
     srand(time(NULL));
-    int x, y, val;
-    best.x = -1;
-    best.y = -1;
+    //int x = -1, y = -1, val;
     // Keep updating the output until getting killed.
-    //while(true) {
-        // Choose a random spot.
-        //int x = (rand() % SIZE);
-        //int y = (rand() % SIZE);
-        val = INT32_MIN;
-        //best.x = (rand() % SIZE);
-        //best.y = (rand() % SIZE);
-        Node root = Node();
-        for(int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                if(root.bd[i][j] != EMPTY) continue;
-                val = max(val, alphabeta(Node(root, i, j, player), dep-1, false));
-                if(val > root.alpha) {
-                    root.alpha = val;
-                    x = i;
-                    y = j;
+    
+    while(true){
+        
+        Node node;
+        alphabeta(node,dep,true);
+        int x = m;
+        int y = n;
+        if(board[7][7] == EMPTY) {
+            x = 7, y = 7;
+        }
+        //蒲月局
+        //花月
+        else if(player == BLACK) {
+            if(node.cnt == 1) {
+                if(board[8][8] == opponent){
+                    x = 6; y = 8;
                 }
-                
+                else if(board[6][8] == opponent) {
+                    x = 6; y = 6;
+                }
+                else if(board[6][6] == opponent) {
+                    x = 8; y = 6;
+                }
+                else if(board[8][6] == opponent) {
+                    x = 8; y = 8;
+                }
+
+                else if(board[7][8] == opponent) {
+                    x = 6; y = 8;
+                }
+                else if(board[6][7] == opponent) {
+                    x = 6; y = 6;
+                }
+                else if(board[7][6] == opponent) {
+                    x = 6; y = 6;
+                }
+                else if(board[8][7] == opponent) {
+                    x = 8; y = 8;
+                }
             }
         }
-        //if(best.x == x && best.y == y) {
-        //    read_board(fin);
-        //    continue;
-        //}
-        best.x = x; best.y = y;
-        fout << x << " " << y << std::endl;
-        // Remember to flush the output to ensure the last action is written to file.
-        fout.flush();
-    return;    
-//    }
+        if (board[x][y] == EMPTY) {
+            fout << x << " " << y << std::endl;
+            fout.flush();
+        }  
+    }
 }
 int main(int, char** argv) {
     std::ifstream fin(argv[1]);
