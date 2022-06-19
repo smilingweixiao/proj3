@@ -19,6 +19,7 @@ enum SPOT_STATE {
 int player, opponent;
 const int SIZE = 15;
 std::array<std::array<int, SIZE>, SIZE> board;
+int check[SIZE][SIZE][4];
 
 enum DIRCTION {
     VIRT = 0,
@@ -53,24 +54,47 @@ struct State_Value {
 
 int setHeuristic() {
     int val;
+    int new1_x, new2_x, new3_x, new4_x;
+    int new1_y, new2_y, new3_y, new4_y;
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
-            Point ij(i, j);
             for (int k = 0; k < 4; k++) {
-                int new_x = i+2*dirx[k];
-                int new_y = j+2*diry[k];
-                if(ij.dir[k]) continue;
+                if(check[i][j][k] == 1) continue;
                 if(!board[i][j]) continue;
-                if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
-                    val+=1;
-                    
+                new1_x = i+dirx[k]; new2_x = i+dirx[k]*2; 
+                new3_x = i+dirx[k]*3; new4_x = i+dirx[k]*4;
+                new1_y = j+diry[k]; new2_y = j+diry[k]*2;
+                new3_y = j+diry[k]*3; new4_y = j+diry[k]*4;
+                if(new2_x>=0 && new2_x<SIZE && new2_y>=0 && new2_y<SIZE && board[i][j] == player) {
+                    if(board[i][j] == board[new1_x][new1_y] == board[new2_x][new2_y]){
+                        val++;
+                        check[i][j][k] = check[new1_x][new1_y][k] = check[new2_x][new2_y][k] = 1;
+                        if(new3_x >= 0 && new3_x < SIZE && new3_y >= 0 && new3_y < SIZE) {
+                            check[i][new3_x][new3_y] = 1;
+                        }
+                        if(new4_x >= 0 && new4_x < SIZE && new4_y >= 0 && new4_y < SIZE) {
+                            check[i][new3_x][new3_y] = 1;
+                        }
+                        
+                    }
                 }
-                else {
-
+                else if(new2_x>=0 && new2_x<SIZE && new2_y>=0 && new2_y<SIZE) {
+                    if(board[i][j] == board[new1_x][new1_y] == board[new2_x][new2_y]){
+                        val--;
+                        check[i][j][k] = check[new1_x][new1_y][k] = check[new2_x][new2_y][k] = 1;
+                        if(new3_x >= 0 && new3_x < SIZE && new3_y >= 0 && new3_y < SIZE) {
+                            check[i][new3_x][new3_y] = 1;
+                        }
+                        if(new4_x >= 0 && new4_x < SIZE && new4_y >= 0 && new4_y < SIZE) {
+                            check[i][new3_x][new3_y] = 1;
+                        }
+                        
+                    }
                 }
             }
         }
     }
+    return val;
 }
 
 int val_alphabeta(int nx, int ny, int depth, int alpha, int beta, bool user) {
@@ -140,7 +164,7 @@ void write_valid_spot(std::ofstream& fout) {
         int x = (rand() % SIZE);
         int y = (rand() % SIZE);
         if (board[x][y] == EMPTY) {
-            fout << spot.x << " " << spot.y << std::endl;
+            fout << x << " " << y << std::endl;
             // Remember to flush the output to ensure the last action is written to file.
             fout.flush();
         }
