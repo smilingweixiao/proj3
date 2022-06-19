@@ -3,11 +3,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <array>
-#include <limits.h>
 #include <algorithm>
-#include <vector>
-#include <map>
-#include <set>
+
 using namespace std;
 
 enum SPOT_STATE {
@@ -16,129 +13,126 @@ enum SPOT_STATE {
     WHITE = 2
 };
 
-int player, opponent;
+int player;
+int opponent;
 const int SIZE = 15;
 std::array<std::array<int, SIZE>, SIZE> board;
-int check[SIZE][SIZE][4];
 
-enum DIRCTION {
-    VIRT = 0,
-    HORI = 1,
-    RL = 2,
-    LR = 3
-};
-int dirx[4] = {-1,0,1,1};
-int diry[4] = {0,1,-1,1};
-int dep = 5; //initialize ,deeper win
-vector<int> chess[15];//chess board
-map<int,set<int>> blank;
+int dx[4] = {0,1,1,1};
+int dy[4] = {1,0,1,-1};
+const int dep = 6;
 
 struct Point {
     int x;
     int y;
-    int dir[4];
-    Point(int x, int y) :x(x),y(y) {
-        dir[0] = dir[1] = dir[2] = dir[3] = 0;
-    }
 };
-Point spot;
+Point best;
 
-struct State_Value {
-    void update_board(int x, int y, int color) {
-        board[x][y] = color;
+struct Node {
+    std::array<std::array<int, SIZE>, SIZE> bd;    //bd
+    int isline[SIZE][SIZE][4];
+    int alpha, beta;
+    Node() {
+        alpha = INT32_MIN;
+        beta = INT32_MAX;
+        for(int i = 0; i < SIZE; i++) {
+            for(int j = 0; j < SIZE; j++) {
+                bd[i][j] = board[i][j];
+            }
+        }
     }
-    void restore_board(int x, int y) {
-        board[x][y] = EMPTY;
+    Node(Node node, int x, int y, int color) {
+        for(int i = 0; i < SIZE; i++) {
+            for(int j = 0; j < SIZE; j++) {
+                bd[i][j] = node.bd[i][j];
+            }
+        }
+        bd[x][y] = color;
+        alpha = node.alpha; beta = node.beta;
     }
-};
-
-int setHeuristic() {
-    int val;
-    int new1_x, new2_x, new3_x, new4_x;
-    int new1_y, new2_y, new3_y, new4_y;
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            for (int k = 0; k < 4; k++) {
-                if(check[i][j][k] == 1) continue;
-                if(!board[i][j]) continue;
-                new1_x = i+dirx[k]; new2_x = i+dirx[k]*2; 
-                new3_x = i+dirx[k]*3; new4_x = i+dirx[k]*4;
-                new1_y = j+diry[k]; new2_y = j+diry[k]*2;
-                new3_y = j+diry[k]*3; new4_y = j+diry[k]*4;
-                if(new2_x>=0 && new2_x<SIZE && new2_y>=0 && new2_y<SIZE && board[i][j] == player) {
-                    if(board[i][j] == board[new1_x][new1_y] == board[new2_x][new2_y]){
-                        val++;
-                        check[i][j][k] = check[new1_x][new1_y][k] = check[new2_x][new2_y][k] = 1;
-                        if(new3_x >= 0 && new3_x < SIZE && new3_y >= 0 && new3_y < SIZE) {
-                            check[i][new3_x][new3_y] = 1;
-                        }
-                        if(new4_x >= 0 && new4_x < SIZE && new4_y >= 0 && new4_y < SIZE) {
-                            check[i][new3_x][new3_y] = 1;
-                        }
-                        
-                    }
+    int setHeuristic() {
+        int val = 0;
+        int new1_x, new2_x, new3_x, new4_x;
+        int new1_y, new2_y, new3_y, new4_y;
+        //initialize
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                for (int k = 0; k < 4; k++) {
+                    isline[i][j][k] = 0;
                 }
-                else if(new2_x>=0 && new2_x<SIZE && new2_y>=0 && new2_y<SIZE) {
-                    if(board[i][j] == board[new1_x][new1_y] == board[new2_x][new2_y]){
-                        val--;
-                        check[i][j][k] = check[new1_x][new1_y][k] = check[new2_x][new2_y][k] = 1;
-                        if(new3_x >= 0 && new3_x < SIZE && new3_y >= 0 && new3_y < SIZE) {
-                            check[i][new3_x][new3_y] = 1;
+            }
+        }
+        //calculate
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                for (int k = 0; k < 4; k++) {
+                    if(isline[i][j][k]) continue;
+                    if(!board[i][j]) continue;
+                    new1_x = i+dx[k]; new2_x = i+dx[k]*2; 
+                    new3_x = i+dx[k]*3; new4_x = i+dx[k]*4;
+                    new1_y = j+dy[k]; new2_y = j+dy[k]*2;
+                    new3_y = j+dy[k]*3; new4_y = j+dy[k]*4;
+                    if(new2_x>=0 && new2_x<SIZE && new2_y>=0 && new2_y<SIZE && bd[i][j] == player) {
+                        if(bd[i][j] == bd[new1_x][new1_y] == bd[new2_x][new2_y]){
+                            val++;
+                            isline[i][j][k] = isline[new1_x][new1_y][k] = isline[new2_x][new2_y][k] = 1;
+                            if(new3_x >= 0 && new3_x < SIZE && new3_y >= 0 && new3_y < SIZE && bd[new3_x][new3_y] == bd[i][j]) {
+                                isline[new3_x][new3_y][k] = 1;
+                            }
+                            if(new4_x >= 0 && new4_x < SIZE && new4_y >= 0 && new4_y < SIZE && bd[new4_x][new4_y] == bd[i][j]) {
+                                isline[new4_x][new4_y][k] = 1;
+                            }
+                            
                         }
-                        if(new4_x >= 0 && new4_x < SIZE && new4_y >= 0 && new4_y < SIZE) {
-                            check[i][new3_x][new3_y] = 1;
+                    }
+                    else if(new2_x>=0 && new2_x<SIZE && new2_y>=0 && new2_y<SIZE) {
+                        if(bd[i][j] == bd[new1_x][new1_y] == bd[new2_x][new2_y]){
+                            val--;
+                            isline[i][j][k] = isline[new1_x][new1_y][k] = isline[new2_x][new2_y][k] = 1;
+                            if(new3_x >= 0 && new3_x < SIZE && new3_y >= 0 && new3_y < SIZE) {
+                                isline[new3_x][new3_y][k] = 1;
+                            }
+                            if(new4_x >= 0 && new4_x < SIZE && new4_y >= 0 && new4_y < SIZE) {
+                                isline[new4_x][new4_y][k] = 1;
+                            }
+                            
                         }
-                        
                     }
                 }
             }
         }
+        return val;
     }
-    return val;
-}
 
-int val_alphabeta(int nx, int ny, int depth, int alpha, int beta, bool user) {
+};
+
+int alphabeta(Node node, int depth, bool user) {
+    if(depth == 0) return node.setHeuristic();
     int val;
-    int flag = 0;
-    if(depth == 0) return setHeuristic();
     if(user) {
-        board[nx][ny] = player; //state
         val = INT32_MIN;
-        for(auto row : blank) {
-            for(auto col : row.second) {
-                val = max(val, val_alphabeta(row.first, col, depth-1, alpha, beta, false));  
-                if(alpha < val && alpha < beta) {    //choose to put
-                    alpha = val;
-                    spot.x = row.first;
-                    spot.y = col; 
-                }
-                if(alpha >= beta) {
-                    flag = 1;
-                    break;
-                }
-                
+        for(int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if(node.bd[i][j] != EMPTY) continue;
+                val = max(val, alphabeta(Node(node, i, j, player), depth-1, false));
+                node.alpha = max(node.alpha, val);
+                if(node.alpha >= node.beta) break;
             }
-            if(flag) break;
+            if(node.alpha >= node.beta) break;
         }
-        board[nx][ny] = EMPTY;      //state
         return val;
     }
     else {
-        board[nx][ny] = opponent;  //state
         val = INT32_MAX;
-        for(auto row : blank) {
-            for(auto col : row.second) {
-                val = min(val, val_alphabeta(row.first, col, depth-1, alpha, beta, true));  
-                beta = min(beta, val);
-                if(alpha >= beta) {
-                    flag = 1;
-                    break;
-                }
-                
+        for(int i = 0; i < SIZE; i++) {
+            for(int j = 0; j < SIZE; j++) {
+                if(node.bd[i][j] != EMPTY) continue;
+                val = min(val, alphabeta(Node(node, i, j, opponent), depth-1, true));
+                node.beta = min(node.beta, val);
+                if(node.alpha >= node.beta) break;
             }
-            if(flag) break;
+            if(node.alpha >= node.beta) break;
         }
-        board[nx][ny] = EMPTY;         //state
         return val;
     }
 }
@@ -148,38 +142,42 @@ void read_board(std::ifstream& fin) {
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             fin >> board[i][j];
-            if(board[i][j]) blank.at(i).erase(j);
+            fin >> board[i][j];
         }
     }
     if(player == BLACK) opponent = WHITE;
     else opponent = BLACK;
 }
-
 void write_valid_spot(std::ofstream& fout) {
     srand(time(NULL));
-    int x, y;
+    int x, y, val;
     // Keep updating the output until getting killed.
     while(true) {
+        best.x = (rand() % SIZE);
+        best.y = (rand() % SIZE);
+        Node root;
+        for(int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if(root.bd[i][j] != EMPTY) continue;
+                val = max(val, alphabeta(Node(root, i, j, player), dep-1, false));
+                if(val > root.alpha) {
+                    root.alpha = val;
+                    best.x = i;
+                    best.y = j;
+                }
+                
+            }
+        }
         // Choose a random spot.
-        int x = (rand() % SIZE);
-        int y = (rand() % SIZE);
-        val_alphabeta(x, y, dep, INT32_MIN, INT32_MAX, true);
-        if (board[spot.x][spot.y] == EMPTY) {
-            fout << spot.x << " " << spot.y << std::endl;
+        
+        if (board[best.x][best.y] == EMPTY) {
+            fout << best.x << " " << best.y << std::endl;
             // Remember to flush the output to ensure the last action is written to file.
             fout.flush();
         }
     }
 }
-
 int main(int, char** argv) {
-    set<int> c;
-    for(int i = 0; i < SIZE; i++) {
-        c.insert(i);
-    }
-    for(int i = 0; i < SIZE; i++) {
-        blank.insert(pair<int, set<int>>(i, c));
-    }
     std::ifstream fin(argv[1]);
     std::ofstream fout(argv[2]);
     read_board(fin);
