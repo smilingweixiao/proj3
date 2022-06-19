@@ -163,8 +163,9 @@ void write_valid_spot(std::ofstream& fout) {
         // Choose a random spot.
         int x = (rand() % SIZE);
         int y = (rand() % SIZE);
-        if (board[x][y] == EMPTY) {
-            fout << x << " " << y << std::endl;
+        val_alphabeta(x, y, dep, INT32_MIN, INT32_MAX, true);
+        if (board[spot.x][spot.y] == EMPTY) {
+            fout << spot.x << " " << spot.y << std::endl;
             // Remember to flush the output to ensure the last action is written to file.
             fout.flush();
         }
