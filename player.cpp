@@ -21,7 +21,7 @@ std::array<std::array<int, SIZE>, SIZE> board;
 
 int dx[4] = {0,1,1,1};
 int dy[4] = {1,0,1,-1};
-const int dep = 4;
+const int dep = 3; //必須是奇數
 int m, n;
 
 struct Point {
@@ -33,22 +33,27 @@ struct Node {
     std::array<std::array<int, SIZE>, SIZE> bd;    //bd
     int isline[SIZE][SIZE][4];
     int alpha, beta;
+    int user;
+    bool end;
+    Point last_put;
     vector<int> possible_x;
     vector<int> possible_y;
-    int cnt;
     Node() {
-        cnt = 0;
         alpha = INT32_MIN;
         beta = INT32_MAX;
+        user = player;
+        end = false;
+        last_put.x = new_opponent.x;
+        last_put.y = new_opponent.y;
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
                 bd[i][j] = board[i][j];
-                if(bd[i][j] == player) cnt++;
             }
         }
     }
+
+
     Node(Node node, int x, int y, int color) {
-        cnt = 0;
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
                 bd[i][j] = node.bd[i][j];
@@ -56,70 +61,92 @@ struct Node {
         }
         bd[x][y] = color;
         alpha = node.alpha; beta = node.beta;
+        if(node.user == player) user = opponent;
+        else user = player;
+        end = node.end;
+        last_put.x = x;
+        last_put.y = y;
+        possible_x = node.possible_x;
+        possible_y = node.possible_y;
     }
     //defense
-    void find_possiblity() {
+    int calculate(int x, int y) {
+        
+    }
+    void which_to_go() {
+        //defense
         possible_x.clear();
         possible_y.clear();
-        int new_x = new_opponent.x, new_y = new_opponent.y;
+        int new_x, new_y;
         int count, lock, judge;
         //橫
         count = 1; lock = 0; judge = 0;
-        new_x = new_opponent.x; new_y = new_opponent.y;
+        new_x = last_put.x; new_y = last_put.y;
         new_y--;
         while(new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == opponent) {
+            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
                 count++;
                 new_y--;
             }
-            else if(bd[new_x][new_y] == player) {
+            else if(bd[new_x][new_y] == user) {
                 lock++;
-                judge++;
                 break;
             }
             else {
-                judge++;
                 break;
             }
         }
-        new_x = new_opponent.x; new_y = new_opponent.y;
+        if(count == 5) {
+            end = true;
+            return;
+        }
+        new_x = last_put.x; new_y = last_put.y;
         new_y++;
         while(new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == opponent) {
+
+            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
                 count++;
                 new_y++;
+                if(count == 5) {
+                    end = true;
+                    return ;
+                }
             }
-            else if(bd[new_x][new_y] == player) {
+            else if(bd[new_x][new_y] == user) {
                 lock++;
-                judge++;
                 //死四
                 if(lock==1 && count==4) {
-                    m = new_x;
-                    n = new_y-5;
-                    return;
+                    judge++;
+                    possible_x.clear();
+                    possible_y.clear();
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y-5);
                 }
                 break;
             }
             else {
-                judge++;
                 //死四
                 if(lock==1 && count==4) {
-                    m = new_x;
-                    n = new_y;
-                    return;
+                    judge++;
+                    possible_x.clear();
+                    possible_y.clear();
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y);
+                    break;
                 }
                 //活三
                 if(lock==0 && count==3) {
+                    judge++;
                     possible_x.clear();
                     possible_y.clear();
                     possible_x.push_back(new_x);
                     possible_y.push_back(new_y);
                     possible_x.push_back(new_x);
                     possible_y.push_back(new_y-4);
-                    return;
+                    break;
                 }
                 //活二
-                if(lock==0 && count==2) {
+                if(lock==0 && count==2 && judge == 0) {
                     possible_x.push_back(new_x);
                     possible_y.push_back(new_y);
                     possible_x.push_back(new_x);
@@ -128,65 +155,74 @@ struct Node {
                 break;
             }
         }
-
         
         //豎
-        count = 1; lock = 0; judge = 0;
-        new_x = new_opponent.x; new_y = new_opponent.y;
+        count = 1; lock = 0;
+        new_x = last_put.x; new_y = last_put.y;
         new_x--;
         while(new_x >= 0 && new_x < SIZE) {
-            if(bd[new_x][new_y] == opponent) {
+            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
                 count++;
                 new_x--;
             }
-            else if(bd[new_x][new_y] == player) {
+            else if(bd[new_x][new_y] == user) {
                 lock++;
-                judge++;
                 break;
             }
             else {
-                judge++;
                 break;
             }
         }
-        new_x = new_opponent.x; new_y = new_opponent.y;
+        if(count == 5) {
+            end = true;
+            return;
+        }
+        new_x = last_put.x; new_y = last_put.y;
         new_x++;
         while(new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == opponent) {
+            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
                 count++;
                 new_x++;
+                if(count == 5) {
+                    end = true;
+                    return;
+                }
             }
-            else if(bd[new_x][new_y] == player) {
+            else if(bd[new_x][new_y] == user) {
                 lock++;
-                judge++;
                 //死四
                 if(lock == 1&&count==4) {
-                    m = new_x-5;
-                    n = new_y;
-                    return;
+                    judge++;
+                    possible_x.clear();
+                    possible_y.clear();
+                    possible_x.push_back(new_x-5);
+                    possible_y.push_back(new_y);
                 }
                 break;
             }
             else {
-                judge++;
                 //死四
                 if(lock==1 && count==4) {
-                    m = new_x;
-                    n = new_y;
-                    return;
+                    judge++;
+                    possible_x.clear();
+                    possible_y.clear();
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y);
+                    break;
                 }
                 //活三
                 if(lock==0 && count==3) {
+                    judge++;
                     possible_x.clear();
                     possible_y.clear();
                     possible_x.push_back(new_x);
                     possible_y.push_back(new_y);
                     possible_x.push_back(new_x-4);
                     possible_y.push_back(new_y);
-                    return;
+                    break;
                 }
                 //活二
-                if(lock==0 && count==2) {
+                if(lock==0 && count==2 && judge == 0) {
                     possible_x.push_back(new_x);
                     possible_y.push_back(new_y);
                     possible_x.push_back(new_x-3);
@@ -195,67 +231,76 @@ struct Node {
                 break;
             }
         }
-
-
+        if(judge == 2) {
+            end = true;
+            return;
+        }
         //撇
-        count = 1; lock = 0; judge = 0;
-        new_x = new_opponent.x; new_y = new_opponent.y;
+        count = 1; lock = 0;
+        new_x = last_put.x; new_y = last_put.y;
         new_x++; new_y--;
         while(new_x >= 0 && new_x < SIZE && new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == opponent) {
+            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
                 count++;
                 new_x++;
                 new_y--;
             }
-            else if(bd[new_x][new_y] == player) {
+            else if(bd[new_x][new_y] == user) {
                 lock++;
-                judge++;
                 break;
             }
             else {
-                judge++;
                 break;
             }
         }
-        new_x = new_opponent.x; new_y = new_opponent.y;
+        if(count == 5) {
+            end = true;
+            return;
+        }
+        new_x = last_put.x; new_y = last_put.y;
         new_x--; new_y++;
         while(new_x >= 0 && new_x < SIZE && new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == opponent) {
+            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
                 count++;
                 new_x--;
                 new_y++;
             }
             else if(bd[new_x][new_y] == player) {
                 lock++;
-                judge++;
                 //死四
                 if(lock==1 && count==4) {
-                    m = new_x+5;
-                    n = new_y-5;
-                    return;
+                    judge++;
+                    possible_x.clear();
+                    possible_y.clear();
+                    possible_x.push_back(new_x+5);
+                    possible_y.push_back(new_y-5);
                 }
                 break;
             }
             else {
-                judge++;
+                
                 //死四
                 if(lock==1 && count==4) {
-                    m = new_x;
-                    n = new_y;
-                    return;
+                    judge++;
+                    possible_x.clear();
+                    possible_y.clear();
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y);
+                    break;
                 }
                 //活三
                 if(lock==0 && count==3) {
+                    judge++;
                     possible_x.clear();
                     possible_y.clear();
                     possible_x.push_back(new_x);
                     possible_y.push_back(new_y);
                     possible_x.push_back(new_x+4);
                     possible_y.push_back(new_y-4);
-                    return;
+                    break;
                 }
                 //活二
-                if(lock==0 && count==2) {
+                if(lock==0 && count==2 && judge == 0) {
                     possible_x.push_back(new_x);
                     possible_y.push_back(new_y);
                     possible_x.push_back(new_x+3);
@@ -264,67 +309,75 @@ struct Node {
                 break;
             }
         }
-
-    
+        if(judge == 2) {
+            end = true;
+            return;
+        }
         //捺
-        count = 1; lock = 0; judge = 0;
-        new_x = new_opponent.x; new_y = new_opponent.y;
+        count = 1; lock = 0;
+        new_x = last_put.x; new_y = last_put.y;
         new_x++; new_y++;
         while(new_x >= 0 && new_x < SIZE && new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == opponent) {
+            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
                 count++;
                 new_x++;
                 new_y++;
             }
             else if(bd[new_x][new_y] == player) {
                 lock++;
-                judge++;
                 break;
             }
             else {
-                judge++;
                 break;
             }
         }
-        new_x = new_opponent.x; new_y = new_opponent.y;
+        if(count == 5) {
+            end = true;
+            return;
+        }
+        new_x = last_put.x; new_y = last_put.y;
         new_x--; new_y--;
         while(new_x >= 0 && new_x < SIZE && new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == opponent) {
+            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
                 count++;
                 new_x--;
                 new_y--;
             }
             else if(bd[new_x][new_y] == player) {
                 lock++;
-                judge++;
                 //死四
                 if(lock==1 && count==4) {
-                    m = new_x+5;
-                    n = new_y+5;
-                    return;
+                    judge++;
+                    possible_x.clear();
+                    possible_y.clear();
+                    possible_x.push_back(new_x+5);
+                    possible_y.push_back(new_y+5);
                 }
                 break;
             }
             else {
-                judge++;
                 //死四
                 if(lock==1 && count==4) {
-                    m = new_x;
-                    n = new_y;
-                    return;
+                    judge++;
+                    possible_x.clear();
+                    possible_y.clear();
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y);
+                    break;
                 }
                 //活三
                 if(lock==0 && count==3) {
+                    judge++;
                     possible_x.clear();
                     possible_y.clear();
                     possible_x.push_back(new_x);
                     possible_y.push_back(new_y);
                     possible_x.push_back(new_x+4);
                     possible_y.push_back(new_y+4);
-                    return;
+                    break;
                 }
                 //活二
-                if(lock==0 && count==2) {
+                if(lock==0 && count==2 && judge == 0) {
                     possible_x.push_back(new_x);
                     possible_y.push_back(new_y);
                     possible_x.push_back(new_x+3);
@@ -333,51 +386,110 @@ struct Node {
                 break;
             }
         }
+        if(judge == 2) {
+            end = true;
+            return;
+        }
+        if(possible_x.empty()) {
+            for(int i = 0;i < SIZE;i++) {
+                for(int j = 0;j < SIZE;j++) {
+                    if(bd[i][j] == user) {
+                        if(i-1 >= 0) {
+                            if(bd[i-1][j] == EMPTY) {
+                                possible_x.push_back(i-1);
+                                possible_y.push_back(j);
+                            }
+                        }
+                        if(i+1 < SIZE) {
+                            if(bd[i+1][j] == EMPTY) {
+                                possible_x.push_back(i+1);
+                                possible_y.push_back(j);
+                            }
+                        }
+                        if(j-1 >= 0) {
+                            if(bd[i][j-1] == EMPTY) {
+                                possible_x.push_back(i);
+                                possible_y.push_back(j-1);
+                            } 
+                        }
+                        if(j+1 < SIZE) {
+                            if(bd[i][j+1] == EMPTY) {
+                                possible_x.push_back(i);
+                                possible_y.push_back(j+1);
+                            }
+                        }
+                        if(i-1 >= 0 && j-1 >= 0) {
+                            if(bd[i-1][j-1] == EMPTY) {
+                                possible_x.push_back(i-1);
+                                possible_y.push_back(j-1);
+                            }                            
+                        }
+                        if(i-1 >= 0 && j+1 < SIZE) {
+                            if(bd[i-1][j+1] == EMPTY) {
+                                possible_x.push_back(i-1);
+                                possible_y.push_back(j+1);
+                            }                            
+                        }
+                        if(i+1 < SIZE && j-1 >= 0) {
+                            if(bd[i+1][j-1] == EMPTY) {
+                                possible_x.push_back(i+1);
+                                possible_y.push_back(j-1);
+                            }                            
+                        }
+                        if(i+1 < SIZE && j+1 < SIZE) {
+                            if(bd[i+1][j+1] == EMPTY) {
+                                possible_x.push_back(i+1);
+                                possible_y.push_back(j+1);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if(possible_x.empty()) {
+            //未完待續
+        }
     
     }
-    int calculate(int x, int y) {
-        
-    }
-
 };
 
 
 Node root;
 Point new_opponent;
+Point each_update;
 
 int alphabeta(Node node, int depth, bool user) {
+    node.which_to_go();
+    if(node.end) {
+        if(node.user == player) return INT32_MIN;
+        else return INT32_MAX;
+    }
     if(depth == 0) return node.setHeuristic();
     if(depth == dep) {
-
+    
     }
     int val;
     if(user) {
         val = INT32_MIN;
-        for(int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                if(node.bd[i][j] != EMPTY) continue;
-                val = max(val, alphabeta(Node(node, i, j, player), depth-1, false));
-                if(val > node.alpha && depth == dep) {
-                    m = i;
-                    n = j;
-                    //cout << m << n << endl;
-                }
-                node.alpha = max(node.alpha, val);
-                if(node.alpha >= node.beta) break;
+        int len = node.possible_x.size();
+        for(int i = 0; i < len; i++) {
+            val = max(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], player), depth-1, false));
+            if(val > node.alpha && depth == dep) {
+                    m = node.possible_x[i];
+                    n = node.possible_y[i];
             }
+            node.alpha = max(node.alpha, val);
             if(node.alpha >= node.beta) break;
         }
         return val;
     }
     else {
         val = INT32_MAX;
-        for(int i = 0; i < SIZE; i++) {
-            for(int j = 0; j < SIZE; j++) {
-                if(node.bd[i][j] != EMPTY) continue;
-                val = min(val, alphabeta(Node(node, i, j, opponent), depth-1, true));
-                node.beta = min(node.beta, val);
-                if(node.alpha >= node.beta) break;
-            }
+        int len = node.possible_x.size();
+        for(int i = 0; i < len; i++) {
+            val = min(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], opponent), depth-1, true));
+            node.beta = min(node.beta, val);
             if(node.alpha >= node.beta) break;
         }
         return val;
