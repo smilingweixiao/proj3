@@ -70,8 +70,69 @@ struct Node {
         possible_y = node.possible_y;
     }
     //defense
-    int calculate(int x, int y) {
+    int calculate() {
+        int val = 0;
+        int flag = 1;
+        for(int i = 0; i < 4; i++) {
+            flag = 1;
+            int new_x = last_put.x+dx[i], new_y = last_put.y+dy[i];
+            int count = 1, lock = 0;
+            while(new_x >= 0 && new_x < SIZE 
+            && new_y >= 0 && new_y < SIZE) {
+                if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
+                    new_x+=dx[i];
+                    new_y+=dy[i];
+                    count++;
+                }
+                else if(bd[new_x][new_y] == EMPTY) {
+                    break;
+                }
+                else {
+                    if(i==0 || i==1) {
+                        val-=1;
+                    }
+                    else {
+                        val-=2;
+                    }
+                    lock++;
+                    break;
+                }
+            }
+            
+            new_x = last_put.x-dx[i], new_y = last_put.y-dy[i];
+            while(new_x >= 0 && new_x < SIZE 
+            && new_y >= 0 && new_y < SIZE) {
+                flag = 0;
+                if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
+                    new_x-=dx[i];
+                    new_y-=dy[i];
+                    count++;
+                }
+                else if(bd[new_x][new_y] == EMPTY) {
+                    if(lock==0 && count ==3) val+=20;
+                    else if(lock==1 && count==4) val+=20;
+                    else if(lock==0 && count==2) val+=2;
+                    else if(lock==1 && count==2 && (i==2||i==3)) val+=2;
+                    else if(lock==1 && count==2) val+=1;
+                    break;
+                }
+                else {
+                    lock++;
+                    if(lock==1 && count==4) val+=20;
+                    else if(lock==1 && count>=2 && (i==0 || i==1)) val+=1;
+                    else if(lock==1 && count>=2) val+=2;
+                    else if(lock==1 && (i==0||i==1)) val-=1;
+                    else if(lock==1) val-=2;
+                    break;
+                }
+            }
         
+            if(flag) {
+                if(lock==0 && count==4) val+=20;
+            }
+        
+        }
+        return val;
     }
     void which_to_go() {
         //defense
@@ -465,7 +526,7 @@ int alphabeta(Node node, int depth, bool user) {
         if(node.user == player) return INT32_MIN;
         else return INT32_MAX;
     }
-    if(depth == 0) return node.setHeuristic();
+    if(depth == 0) return node.calculate();
     if(depth == dep) {
     
     }
