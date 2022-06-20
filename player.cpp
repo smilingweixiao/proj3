@@ -335,20 +335,12 @@ struct Node {
         }
     
     }
-    int calculate() {
-
+    int calculate(int x, int y) {
+        
     }
 
 };
 
-void check(int x, int y, int color) {
-    if(color == player) {
-
-    }
-    else{
-
-    }
-}
 
 Node root;
 Point new_opponent;
