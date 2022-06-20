@@ -540,12 +540,17 @@ bool check() {
         lock = 0; count = 0;
         for(int j = 0; j < SIZE; j++) {
             if(board[i][j] == opponent) {
-                if(j == 0 || j == SIZE-1) {
+                if(j==0 || j==SIZE-1) {
                     lock++;
                 }
                 count++;
+                if(lock==0 && count==4) {
+                    best_1.x = i;
+                    best_1.y = j-4;
+                    return true;
+                }
             }
-            if(board[i][j] == EMPTY) {
+            else if(board[i][j] == EMPTY) {
                 //活三
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
@@ -579,6 +584,7 @@ bool check() {
             }
             else {
                 //死四
+                lock++;
                 if(lock == 1 && count == 4) {
                     best_1.x = i; best_1.y = j-5;
                     return true;
@@ -596,12 +602,17 @@ bool check() {
         lock = 0; count = 0;
         for(int i = 0; i < SIZE; i++) {
             if(board[i][j] == opponent) {
-                if(j == 0 || j == SIZE-1) {
+                if(i==0 || i==SIZE-1) {
                     lock++;
                 }
                 count++;
+                if(lock==0 && count==4) {
+                    best_1.x = i-4;
+                    best_1.y = j;
+                    return true;
+                }
             }
-            if(board[i][j] == EMPTY) {
+            else if(board[i][j] == EMPTY) {
                 //活三
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
@@ -636,6 +647,7 @@ bool check() {
             }
             else {
                 //死四
+                lock++;
                 if(lock == 1 && count == 4) {
                     best_1.x = i-5; best_1.y = j;
                     return true;
@@ -658,8 +670,13 @@ bool check() {
                     lock++;
                 }
                 count++;
+                if(lock==0 && count==4) {
+                    best_1.x = i-4;
+                    best_1.y = j-4;
+                    return true;
+                }
             }
-            if(board[i][j] == EMPTY) {
+            else if(board[i][j] == EMPTY) {
                 //活三
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
@@ -693,6 +710,7 @@ bool check() {
             }
             else {
                 //死四
+                lock++;
                 if(lock == 1 && count == 4) {
                     best_1.x = i-5; best_1.y = j-5;
                     return true;
@@ -715,8 +733,13 @@ bool check() {
                     lock++;
                 }
                 count++;
+                if(count==4 && lock==0) {
+                    best_1.x = i-4;
+                    best_1.y = j-4;
+                    return true;
+                }
             }
-            if(board[i][j] == EMPTY) {
+            else if(board[i][j] == EMPTY) {
                 //活三
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
@@ -728,6 +751,7 @@ bool check() {
                     best_1.x = i; best_1.y = j;
                     return true;
                 }
+                //活三變形
                 if(lock==0 && count==2) {
                     if(j+1 < SIZE && i+1 <SIZE) {
                         if(board[i+1][j+1] == opponent) {
@@ -749,6 +773,7 @@ bool check() {
             }
             else {
                 //死四
+                lock++;
                 if(lock == 1 && count == 4) {
                     best_1.x = i-5; best_1.y = j-5;
                     return true;
@@ -772,8 +797,13 @@ bool check() {
                     lock++;
                 }
                 count++;
+                if(lock==0 && count==4) {
+                    best_1.x = i-4;
+                    best_1.y = j+4;
+                    return true;
+                }
             }
-            if(board[i][j] == EMPTY) {
+            else if(board[i][j] == EMPTY) {
                 //活三
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
@@ -785,7 +815,8 @@ bool check() {
                     best_1.x = i; best_1.y = j;
                     return true;
                 }
-                if(lock==0 && count==2) {
+                //活三變形
+                else if(lock==0 && count==2) {
                     if(j-1 >= 0 && i+1 <SIZE) {
                         if(board[i+1][j-1] == opponent) {
                             best_1.x = i;
@@ -806,6 +837,7 @@ bool check() {
             }
             else {
                 //死四
+                lock++;
                 if(lock == 1 && count == 4) {
                     best_1.x = i-5; best_1.y = j+5;
                     return true;
@@ -828,12 +860,17 @@ bool check() {
                     lock++;
                 }
                 count++;
+                if(lock==0 && count==4) {
+                    best_1.x = i-4;
+                    best_1.y = j+4;
+                    return true;
+                }
             }
-            if(board[i][j] == EMPTY) {
+            else if(board[i][j] == EMPTY) {
                 //活三
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
-                    best_2.x = i; best_2.y = j-4;
+                    best_2.x = i-4; best_2.y = j+4;
                     return true;
                 }
                 //死四
@@ -846,8 +883,9 @@ bool check() {
             }
             else {
                 //死四
+                lock++;
                 if(lock == 1 && count == 4) {
-                    best_1.x = i; best_1.y = j-5;
+                    best_1.x = i-5; best_1.y = j+5;
                     return true;
                 }
                 count = 0;
