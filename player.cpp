@@ -34,7 +34,7 @@ struct Node {
     vector<int> possible_x;
     vector<int> possible_y;
     //compare
-    void operator=(const Node& rhs) {
+    Node (const Node& rhs) {
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
                 bd[i][j] = rhs.bd[i][j];
@@ -535,7 +535,7 @@ Point best_2;
 
 bool check() {
     //橫
-    int lock = 0, count = 0;
+    int lock = 0, count = 0, k = 0;
     for(int i = 0; i < SIZE; i++){
         lock = 0; count = 0;
         for(int j = 0; j < SIZE; j++) {
@@ -557,6 +557,23 @@ bool check() {
                     best_1.x = i; best_1.y = j;
                     return true;
                 }
+                //活三變形
+                if(lock==0 && count==2) {
+                    if(j-4 >= 0) {
+                        if(board[i][j-4] == opponent) {
+                            best_1.x = i;
+                            best_1.y = j-3;
+                            return true;
+                        }
+                    }
+                    if(j+1 < SIZE) {
+                        if(board[i][j+1] == opponent) {
+                            best_1.x = i;
+                            best_1.y = j;
+                            return true;
+                        }
+                    }
+                }
                 count = 0;
                 lock = 0;
             }
@@ -574,7 +591,7 @@ bool check() {
     }
 
     //豎
-    int lock = 0, count = 0;
+    lock = 0; count = 0;
     for(int j = 0; j < SIZE; j++){
         lock = 0; count = 0;
         for(int i = 0; i < SIZE; i++) {
@@ -596,8 +613,26 @@ bool check() {
                     best_1.x = i; best_1.y = j;
                     return true;
                 }
+                //活三變形
+                if(lock==0 && count==2) {
+                    if(i-4 >= 0) {
+                        if(board[i-4][j] == opponent) {
+                            best_1.x = i-3;
+                            best_1.y = j;
+                            return true;
+                        }
+                    }
+                    if(i+1 < SIZE) {
+                        if(board[i+1][j] == opponent) {
+                            best_1.x = i;
+                            best_1.y = j;
+                            return true;
+                        }
+                    }
+                }
                 count = 0;
                 lock = 0;
+                
             }
             else {
                 //死四
@@ -613,13 +648,13 @@ bool check() {
     }
 
     //捺
-    int lock = 0, count = 0, k;
+    lock = 0; count = 0;
     for(int j = 0; j < SIZE; j++){
         lock = 0; count = 0;
         k = j;
         for(int i = 0; i < SIZE && j < SIZE; i++,j++) {
             if(board[i][j] == opponent) {
-                if(j == 0 || j == SIZE-1) {
+                if(i==0 || i==SIZE-1 || j==SIZE-1 || j==0) {
                     lock++;
                 }
                 count++;
@@ -628,7 +663,7 @@ bool check() {
                 //活三
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
-                    best_2.x = i; best_2.y = j-4;
+                    best_2.x = i-4; best_2.y = j-4;
                     return true;
                 }
                 //死四
@@ -636,13 +671,30 @@ bool check() {
                     best_1.x = i; best_1.y = j;
                     return true;
                 }
+                //活三變形
+                if(lock==0 && count==2) {
+                    if(j+1 < SIZE && i+1 <SIZE) {
+                        if(board[i+1][j+1] == opponent) {
+                            best_1.x = i;
+                            best_1.y = j;
+                            return true;
+                        }
+                    }
+                    if(j-4 >= 0 && i-4 >= 0) {
+                        if(board[i-4][j-4] == opponent) {
+                            best_1.x = i-3;
+                            best_1.y = j-3;
+                            return true;
+                        }
+                    }
+                }
                 count = 0;
                 lock = 0;
             }
             else {
                 //死四
                 if(lock == 1 && count == 4) {
-                    best_1.x = i; best_1.y = j-5;
+                    best_1.x = i-5; best_1.y = j-5;
                     return true;
                 }
                 count = 0;
@@ -653,13 +705,13 @@ bool check() {
         j = k;
     }
     
-    int lock = 0, count = 0, k;
+    lock = 0; count = 0;
     for(int i = 1; i < SIZE; i++){
         lock = 0; count = 0;
         k = i;
         for(int j = 0; i < SIZE && j < SIZE; i++,j++) {
             if(board[i][j] == opponent) {
-                if(j == 0 || j == SIZE-1) {
+                if(j==0 || j==SIZE-1 || i==SIZE-1 || i==0) {
                     lock++;
                 }
                 count++;
@@ -668,7 +720,7 @@ bool check() {
                 //活三
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
-                    best_2.x = i; best_2.y = j-4;
+                    best_2.x = i-4; best_2.y = j-4;
                     return true;
                 }
                 //死四
@@ -676,13 +728,29 @@ bool check() {
                     best_1.x = i; best_1.y = j;
                     return true;
                 }
+                if(lock==0 && count==2) {
+                    if(j+1 < SIZE && i+1 <SIZE) {
+                        if(board[i+1][j+1] == opponent) {
+                            best_1.x = i;
+                            best_1.y = j;
+                            return true;
+                        }
+                    }
+                    if(j-4 >= 0 && i-4 >= 0) {
+                        if(board[i-4][j-4] == opponent) {
+                            best_1.x = i-3;
+                            best_1.y = j-3;
+                            return true;
+                        }
+                    }
+                }
                 count = 0;
                 lock = 0;
             }
             else {
                 //死四
                 if(lock == 1 && count == 4) {
-                    best_1.x = i; best_1.y = j-5;
+                    best_1.x = i-5; best_1.y = j-5;
                     return true;
                 }
                 count = 0;
@@ -694,13 +762,13 @@ bool check() {
     }
 
     //撇
-    int lock = 0, count = 0, k;
+    lock = 0; count = 0;
     for(int j = 0; j < SIZE; j++){
         lock = 0; count = 0;
         k = j;
         for(int i = 0; i < SIZE && j >= 0; i++,j--) {
             if(board[i][j] == opponent) {
-                if(j == 0 || j == SIZE-1) {
+                if(j==0 || j==SIZE-1 || i==0 || i==SIZE-1) {
                     lock++;
                 }
                 count++;
@@ -709,7 +777,7 @@ bool check() {
                 //活三
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
-                    best_2.x = i; best_2.y = j-4;
+                    best_2.x = i-4; best_2.y = j+4;
                     return true;
                 }
                 //死四
@@ -717,13 +785,29 @@ bool check() {
                     best_1.x = i; best_1.y = j;
                     return true;
                 }
+                if(lock==0 && count==2) {
+                    if(j-1 >= 0 && i+1 <SIZE) {
+                        if(board[i+1][j-1] == opponent) {
+                            best_1.x = i;
+                            best_1.y = j;
+                            return true;
+                        }
+                    }
+                    if(j+4 < SIZE && i-4 >= 0) {
+                        if(board[i-4][j+4] == opponent) {
+                            best_1.x = i-3;
+                            best_1.y = j+3;
+                            return true;
+                        }
+                    }
+                }
                 count = 0;
                 lock = 0;
             }
             else {
                 //死四
                 if(lock == 1 && count == 4) {
-                    best_1.x = i; best_1.y = j-5;
+                    best_1.x = i-5; best_1.y = j+5;
                     return true;
                 }
                 count = 0;
@@ -734,13 +818,13 @@ bool check() {
         j = k;
     }
 
-    int lock = 0, count = 0, k;
+    lock = 0; count = 0;
     for(int i = 0; i < SIZE; i++){
         lock = 0; count = 0;
         k = i;
         for(int j = 1; i < SIZE && j >= 0 ; i++,j--) {
             if(board[i][j] == opponent) {
-                if(j == 0 || j == SIZE-1) {
+                if(j==0 || j==SIZE-1 || i==0 || i==SIZE-1) {
                     lock++;
                 }
                 count++;
@@ -778,7 +862,7 @@ bool check() {
 }
 
  
-int depth = 1;
+int depth = 3;
 int first;
 
 int alphabeta(Node node, int d) {
@@ -844,21 +928,18 @@ void write_valid_spot(std::ofstream& fout) {
                     Node n2 = Node(root, best_2.x, best_2.y, player);
                     int val_2 = n2.calculate();
                     if(val_1 >= val_2) {
-                        fout << best_1.x << " " << best_1.y << std::endl;
-                        // Remember to flush the output to ensure the last action is written to file.
-                        fout.flush();
+                        x = best_1.x;
+                        y = best_1.y;
                     }
                     else {
-                        fout << best_2.x << " " << best_2.y << std::endl;
-                        // Remember to flush the output to ensure the last action is written to file.
-                        fout.flush();
+                        x = best_2.x;
+                        y = best_2.y;
                     }
                     
                 }
                 else {
-                    fout << best_1.x << " " << best_1.y << std::endl;
-                    // Remember to flush the output to ensure the last action is written to file.
-                    fout.flush();
+                    x = best_1.x;
+                    y = best_1.y;
                 }
             }
             else {
@@ -874,15 +955,15 @@ void write_valid_spot(std::ofstream& fout) {
                         }
                     }
                 }
-                if (board[x][y] == EMPTY) {
-                    fout << x << " " << y << std::endl;
-                    // Remember to flush the output to ensure the last action is written to file.
-                    fout.flush();
-                }
+                
             }
             
         }
-        
+        if (board[x][y] == EMPTY) {
+            fout << x << " " << y << std::endl;
+            // Remember to flush the output to ensure the last action is written to file.
+            fout.flush();
+        }
     }
 }
 
