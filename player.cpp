@@ -126,7 +126,7 @@ struct Node {
                 }
                 else if(bd[new_x][new_y] == EMPTY) {
                     if(lock==0 && count ==3) val+=20;
-                    else if(lock==1 && count==4) val+=20;
+                    else if(lock<=1 && count==4) val+=20;
                     else if(lock==0 && count==2) val+=2;
                     else if(lock==1 && count==2 && (i==2||i==3)) val+=2;
                     else if(lock==1 && count==2) val+=1;
