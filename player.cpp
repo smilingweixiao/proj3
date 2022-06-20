@@ -5,6 +5,7 @@
 #include <array>
 #include <algorithm>
 #include <set>
+#include <vector>
 
 using namespace std;
 
@@ -21,8 +22,9 @@ std::array<std::array<int, SIZE>, SIZE> board;
 
 int dx[4] = {0,1,1,1};
 int dy[4] = {1,0,1,-1};
-const int dep = 3; //必須是奇數
+const int dep = 1; //必須是奇數
 int m, n;
+
 
 struct Point {
     int x;
@@ -31,7 +33,6 @@ struct Point {
 
 struct Node {
     std::array<std::array<int, SIZE>, SIZE> bd;    //bd
-    int isline[SIZE][SIZE][4];
     int alpha, beta;
     int user;
     bool end;
@@ -43,8 +44,8 @@ struct Node {
         beta = INT32_MAX;
         user = player;
         end = false;
-        last_put.x = new_opponent.x;
-        last_put.y = new_opponent.y;
+        last_put.x = -1;
+        last_put.y = -1;
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
                 bd[i][j] = board[i][j];
@@ -69,6 +70,26 @@ struct Node {
         possible_x = node.possible_x;
         possible_y = node.possible_y;
     }
+    
+    Node(Node node, std::array<std::array<int, SIZE>, SIZE> new_board) {
+        last_put.x = -1, last_put.y = -1;
+        for(int i = 0; i < SIZE; i++) {
+            for(int j = 0; j < SIZE; j++) {
+                bd[i][j] = new_board[i][j];
+                if(new_board[i][j] == opponent && new_board[i][j] != node.bd[i][j]) {
+                    last_put.x = i;
+                    last_put.y = j;
+                    cout << "yes" <<endl;
+                }
+            }
+        }
+        
+        alpha = INT32_MIN;
+        beta = INT32_MAX;
+        end = false;
+        user = player;
+    }
+    
     //defense
     int calculate() {
         int val = 0;
@@ -516,20 +537,14 @@ struct Node {
 };
 
 
-Node root;
-Point new_opponent;
-Point each_update;
-
 int alphabeta(Node node, int depth, bool user) {
+    
     node.which_to_go();
     if(node.end) {
         if(node.user == player) return INT32_MIN;
         else return INT32_MAX;
     }
     if(depth == 0) return node.calculate();
-    if(depth == dep) {
-    
-    }
     int val;
     if(user) {
         val = INT32_MIN;
@@ -557,6 +572,14 @@ int alphabeta(Node node, int depth, bool user) {
     }
 }
 
+void minmax() {
+
+
+
+
+}
+
+
 void read_board(std::ifstream& fin) {
     fin >> player;
     for (int i = 0; i < SIZE; i++) {
@@ -567,67 +590,20 @@ void read_board(std::ifstream& fin) {
     if(player == BLACK) opponent = WHITE;
     else opponent = BLACK;
 }
-void write_valid_spot(std::ofstream& fout, std::ifstream& fin) {
-    srand(time(NULL));
-    //int x = -1, y = -1, val;
+void write_valid_spot(std::ofstream& fout) {
+    //srand(time(NULL));
     // Keep updating the output until getting killed.
     bool flag = false;
     //要初始化空白棋盤
-    while(true){
+    Node root;
+    while(true) {
         int x, y;
-        if(board[7][7] == EMPTY) {
+        if(board[7][7] == EMPTY && player == BLACK) {
             x = 7, y = 7;
         }
         else {
-            flag = false;
-            for(int i = 0; i < SIZE; i++) {
-                for(int j = 0; j < SIZE; j++) {
-                    if(root.bd[i][j] != board[i][j] && board[i][j] == opponent) {
-                        flag = true;
-                        new_opponent.x = i;
-                        new_opponent.y = j;
-                        break;
-                    }
-                }
-                if(flag) break;
-            }
-            if(!flag) continue;
-            root = Node();
-            alphabeta(root,dep,true);
-            int x = m;
-            int y = n;
+            
         }
-        //蒲月局
-        //花月
-        /*else if(player == BLACK) {
-            if(node.cnt == 1) {
-                if(board[8][8] == opponent){
-                    x = 6; y = 8;
-                }
-                else if(board[6][8] == opponent) {
-                    x = 6; y = 6;
-                }
-                else if(board[6][6] == opponent) {
-                    x = 8; y = 6;
-                }
-                else if(board[8][6] == opponent) {
-                    x = 8; y = 8;
-                }
-
-                else if(board[7][8] == opponent) {
-                    x = 6; y = 8;
-                }
-                else if(board[6][7] == opponent) {
-                    x = 6; y = 6;
-                }
-                else if(board[7][6] == opponent) {
-                    x = 6; y = 6;
-                }
-                else if(board[8][7] == opponent) {
-                    x = 8; y = 8;
-                }
-            }
-        }*/
         if (board[x][y] == EMPTY) {
             fout << x << " " << y << std::endl;
             fout.flush();
@@ -638,7 +614,7 @@ int main(int, char** argv) {
     std::ifstream fin(argv[1]);
     std::ofstream fout(argv[2]);
     read_board(fin);
-    write_valid_spot(fout,fin);
+    write_valid_spot(fout);
     fin.close();
     fout.close();
     return 0;
