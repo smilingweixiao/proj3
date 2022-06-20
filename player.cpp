@@ -24,6 +24,8 @@ int player;
 int opponent;
 const int SIZE = 15;
 std::array<std::array<int, SIZE>, SIZE> board;
+int depth = 3;
+int first;
 
 struct Node {
     std::array<std::array<int, SIZE>, SIZE> bd;    //bd
@@ -262,11 +264,57 @@ struct Node {
         }
         
         if(possible_x.empty()) {
-            for(int i = 0; i < SIZE; i++) {
-                for(int j = 0; j < SIZE; j++) {
-                    if(bd[i][j] == EMPTY) {
-                        possible_x.push_back(i);
-                        possible_y.push_back(j);
+            for(int i = 0;i < SIZE;i++) {
+                for(int j = 0;j < SIZE;j++) {
+                    if(bd[i][j] == user) {
+                        if(i-1 >= 0) {
+                            if(bd[i-1][j] == EMPTY) {
+                                possible_x.push_back(i-1);
+                                possible_y.push_back(j);
+                            }
+                        }
+                        if(i+1 < SIZE) {
+                            if(bd[i+1][j] == EMPTY) {
+                                possible_x.push_back(i+1);
+                                possible_y.push_back(j);
+                            }
+                        }
+                        if(j-1 >= 0) {
+                            if(bd[i][j-1] == EMPTY) {
+                                possible_x.push_back(i);
+                                possible_y.push_back(j-1);
+                            } 
+                        }
+                        if(j+1 < SIZE) {
+                            if(bd[i][j+1] == EMPTY) {
+                                possible_x.push_back(i);
+                                possible_y.push_back(j+1);
+                            }
+                        }
+                        if(i-1 >= 0 && j-1 >= 0) {
+                            if(bd[i-1][j-1] == EMPTY) {
+                                possible_x.push_back(i-1);
+                                possible_y.push_back(j-1);
+                            }                            
+                        }
+                        if(i-1 >= 0 && j+1 < SIZE) {
+                            if(bd[i-1][j+1] == EMPTY) {
+                                possible_x.push_back(i-1);
+                                possible_y.push_back(j+1);
+                            }                            
+                        }
+                        if(i+1 < SIZE && j-1 >= 0) {
+                            if(bd[i+1][j-1] == EMPTY) {
+                                possible_x.push_back(i+1);
+                                possible_y.push_back(j-1);
+                            }                            
+                        }
+                        if(i+1 < SIZE && j+1 < SIZE) {
+                            if(bd[i+1][j+1] == EMPTY) {
+                                possible_x.push_back(i+1);
+                                possible_y.push_back(j+1);
+                            }
+                        }
                     }
                 }
             }
@@ -601,7 +649,7 @@ bool check() {
     for(int i = 0; i < SIZE; i++){
         lock = 0; count = 0;
         k = i;
-        for(int j = 1; i < SIZE && j >= 0 ; i++,j--) {
+        for(int j = SIZE-1; i < SIZE && j >= 0 ; i++,j--) {
             if(board[i][j] == opponent) {
                 if(j==0 || j==SIZE-1 || i==0 || i==SIZE-1) {
                     lock++;
@@ -647,8 +695,7 @@ bool check() {
 }
 
  
-int depth = 3;
-int first;
+
 
 int alphabeta(Node node, int d) {
     node.which_to_go();
@@ -729,16 +776,71 @@ void write_valid_spot(std::ofstream& fout) {
             }
             else {
                 int val = INT32_MIN;
-                for(int i = 0; i < SIZE; i++) {
-                    for(int j = 0; j < SIZE; j++) {
-                        if(board[i][j] != EMPTY) continue;
-                        val = max(val, alphabeta(Node(root, i, j, player), depth-1));
-                    
-                        if(val > root.alpha) {
-                            x = i; y = j;
-                            root.alpha = val;
+                root.possible_x.clear(); root.possible_y.clear();
+                for(int i = 0;i < SIZE;i++) {
+                for(int j = 0;j < SIZE;j++) {
+                    if(root.bd[i][j] == player) {
+                        if(i-1 >= 0) {
+                            if(root.bd[i-1][j] == EMPTY) {
+                                root.possible_x.push_back(i-1);
+                                root.possible_y.push_back(j);
+                            }
+                        }
+                        if(i+1 < SIZE) {
+                            if(root.bd[i+1][j] == EMPTY) {
+                                root.possible_x.push_back(i+1);
+                                root.possible_y.push_back(j);
+                            }
+                        }
+                        if(j-1 >= 0) {
+                            if(root.bd[i][j-1] == EMPTY) {
+                                root.possible_x.push_back(i);
+                                root.possible_y.push_back(j-1);
+                            } 
+                        }
+                        if(j+1 < SIZE) {
+                            if(root.bd[i][j+1] == EMPTY) {
+                                root.possible_x.push_back(i);
+                                root.possible_y.push_back(j+1);
+                            }
+                        }
+                        if(i-1 >= 0 && j-1 >= 0) {
+                            if(root.bd[i-1][j-1] == EMPTY) {
+                                root.possible_x.push_back(i-1);
+                                root.possible_y.push_back(j-1);
+                            }                            
+                        }
+                        if(i-1 >= 0 && j+1 < SIZE) {
+                            if(root.bd[i-1][j+1] == EMPTY) {
+                                root.possible_x.push_back(i-1);
+                                root.possible_y.push_back(j+1);
+                            }                            
+                        }
+                        if(i+1 < SIZE && j-1 >= 0) {
+                            if(root.bd[i+1][j-1] == EMPTY) {
+                                root.possible_x.push_back(i+1);
+                                root.possible_y.push_back(j-1);
+                            }                            
+                        }
+                        if(i+1 < SIZE && j+1 < SIZE) {
+                            if(root.bd[i+1][j+1] == EMPTY) {
+                                root.possible_x.push_back(i+1);
+                                root.possible_y.push_back(j+1);
+                            }
                         }
                     }
+                }
+                }
+                int len = root.possible_x.size();
+                for(int i = 0; i < len; i++) {
+                    
+                    val = max(val, alphabeta(Node(root, root.possible_x[i], root.possible_y[i], player), depth-1));
+                    
+                    if(val > root.alpha) {
+                        x = root.possible_x[i]; y = root.possible_y[i];
+                        root.alpha = val;
+                    }
+                    
                 }
                 
             }
