@@ -149,383 +149,130 @@ struct Node {
         return val;
     }
     void which_to_go() {
-        //defense
         possible_x.clear();
         possible_y.clear();
+        //連線
         int new_x, new_y;
-        int count, lock, judge;
-        //橫
-        count = 1; lock = 0; judge = 0;
-        new_x = last_put.x; new_y = last_put.y;
-        new_y--;
-        while(new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
-                count++;
-                new_y--;
-            }
-            else if(bd[new_x][new_y] == user) {
-                lock++;
-                break;
-            }
-            else {
-                break;
-            }
-        }
-        if(count == 5) {
-            end = true;
-            return;
-        }
-        new_x = last_put.x; new_y = last_put.y;
-        new_y++;
-        while(new_y >= 0 && new_y < SIZE) {
-
-            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
-                count++;
-                new_y++;
-                if(count == 5) {
-                    end = true;
-                    return ;
-                }
-            }
-            else if(bd[new_x][new_y] == user) {
-                lock++;
-                //死四
-                if(lock==1 && count==4) {
-                    judge++;
-                    possible_x.clear();
-                    possible_y.clear();
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y-5);
-                }
-                break;
-            }
-            else {
-                //死四
-                if(lock==1 && count==4) {
-                    judge++;
-                    possible_x.clear();
-                    possible_y.clear();
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y);
-                    break;
-                }
-                //活三
-                if(lock==0 && count==3) {
-                    judge++;
-                    possible_x.clear();
-                    possible_y.clear();
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y);
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y-4);
-                    break;
-                }
-                //活二
-                if(lock==0 && count==2 && judge == 0) {
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y);
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y-3);
-                }
-                break;
-            }
-        }
-        
-        //豎
-        count = 1; lock = 0;
-        new_x = last_put.x; new_y = last_put.y;
-        new_x--;
-        while(new_x >= 0 && new_x < SIZE) {
-            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
-                count++;
-                new_x--;
-            }
-            else if(bd[new_x][new_y] == user) {
-                lock++;
-                break;
-            }
-            else {
-                break;
-            }
-        }
-        if(count == 5) {
-            end = true;
-            return;
-        }
-        new_x = last_put.x; new_y = last_put.y;
-        new_x++;
-        while(new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
-                count++;
-                new_x++;
-                if(count == 5) {
-                    end = true;
-                    return;
-                }
-            }
-            else if(bd[new_x][new_y] == user) {
-                lock++;
-                //死四
-                if(lock == 1&&count==4) {
-                    judge++;
-                    possible_x.clear();
-                    possible_y.clear();
-                    possible_x.push_back(new_x-5);
-                    possible_y.push_back(new_y);
-                }
-                break;
-            }
-            else {
-                //死四
-                if(lock==1 && count==4) {
-                    judge++;
-                    possible_x.clear();
-                    possible_y.clear();
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y);
-                    break;
-                }
-                //活三
-                if(lock==0 && count==3) {
-                    judge++;
-                    possible_x.clear();
-                    possible_y.clear();
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y);
-                    possible_x.push_back(new_x-4);
-                    possible_y.push_back(new_y);
-                    break;
-                }
-                //活二
-                if(lock==0 && count==2 && judge == 0) {
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y);
-                    possible_x.push_back(new_x-3);
-                    possible_y.push_back(new_y);
-                }
-                break;
-            }
-        }
-        if(judge == 2) {
-            end = true;
-            return;
-        }
-        //撇
-        count = 1; lock = 0;
-        new_x = last_put.x; new_y = last_put.y;
-        new_x++; new_y--;
-        while(new_x >= 0 && new_x < SIZE && new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
-                count++;
-                new_x++;
-                new_y--;
-            }
-            else if(bd[new_x][new_y] == user) {
-                lock++;
-                break;
-            }
-            else {
-                break;
-            }
-        }
-        if(count == 5) {
-            end = true;
-            return;
-        }
-        new_x = last_put.x; new_y = last_put.y;
-        new_x--; new_y++;
-        while(new_x >= 0 && new_x < SIZE && new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
-                count++;
-                new_x--;
-                new_y++;
-            }
-            else if(bd[new_x][new_y] == player) {
-                lock++;
-                //死四
-                if(lock==1 && count==4) {
-                    judge++;
-                    possible_x.clear();
-                    possible_y.clear();
-                    possible_x.push_back(new_x+5);
-                    possible_y.push_back(new_y-5);
-                }
-                break;
-            }
-            else {
-                
-                //死四
-                if(lock==1 && count==4) {
-                    judge++;
-                    possible_x.clear();
-                    possible_y.clear();
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y);
-                    break;
-                }
-                //活三
-                if(lock==0 && count==3) {
-                    judge++;
-                    possible_x.clear();
-                    possible_y.clear();
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y);
-                    possible_x.push_back(new_x+4);
-                    possible_y.push_back(new_y-4);
-                    break;
-                }
-                //活二
-                if(lock==0 && count==2 && judge == 0) {
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y);
-                    possible_x.push_back(new_x+3);
-                    possible_y.push_back(new_y-3);
-                }
-                break;
-            }
-        }
-        if(judge == 2) {
-            end = true;
-            return;
-        }
-        //捺
-        count = 1; lock = 0;
-        new_x = last_put.x; new_y = last_put.y;
-        new_x++; new_y++;
-        while(new_x >= 0 && new_x < SIZE && new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
-                count++;
-                new_x++;
-                new_y++;
-            }
-            else if(bd[new_x][new_y] == player) {
-                lock++;
-                break;
-            }
-            else {
-                break;
-            }
-        }
-        if(count == 5) {
-            end = true;
-            return;
-        }
-        new_x = last_put.x; new_y = last_put.y;
-        new_x--; new_y--;
-        while(new_x >= 0 && new_x < SIZE && new_y >= 0 && new_y < SIZE) {
-            if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
-                count++;
-                new_x--;
-                new_y--;
-            }
-            else if(bd[new_x][new_y] == player) {
-                lock++;
-                //死四
-                if(lock==1 && count==4) {
-                    judge++;
-                    possible_x.clear();
-                    possible_y.clear();
-                    possible_x.push_back(new_x+5);
-                    possible_y.push_back(new_y+5);
-                }
-                break;
-            }
-            else {
-                //死四
-                if(lock==1 && count==4) {
-                    judge++;
-                    possible_x.clear();
-                    possible_y.clear();
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y);
-                    break;
-                }
-                //活三
-                if(lock==0 && count==3) {
-                    judge++;
-                    possible_x.clear();
-                    possible_y.clear();
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y);
-                    possible_x.push_back(new_x+4);
-                    possible_y.push_back(new_y+4);
-                    break;
-                }
-                //活二
-                if(lock==0 && count==2 && judge == 0) {
-                    possible_x.push_back(new_x);
-                    possible_y.push_back(new_y);
-                    possible_x.push_back(new_x+3);
-                    possible_y.push_back(new_y+3);
-                }
-                break;
-            }
-        }
-        if(judge == 2) {
-            end = true;
-            return;
-        }
-        if(possible_x.empty()) {
-            for(int i = 0;i < SIZE;i++) {
-                for(int j = 0;j < SIZE;j++) {
-                    if(bd[i][j] == user) {
-                        if(i-1 >= 0) {
-                            if(bd[i-1][j] == EMPTY) {
-                                possible_x.push_back(i-1);
-                                possible_y.push_back(j);
+        for(int i = 0; i < SIZE-4; i++) {
+            for(int j = 0; j < SIZE-4; j++) {
+                for(int k = 0; k < 4; k++) {
+                    new_x = i+3*dx[k];
+                    new_y = j+3*dy[k];
+                    if(bd[i][j] != user) continue;
+                    if(new_x<0 || new_y<0 || new_x>=SIZE || new_y>=SIZE) continue;
+                    if(user == bd[i+dx[k]][j+dy[k]] && user == bd[i+2*dx[k]][j+2*dy[k]] && user == bd[i+3*dx[k]][j+3*dy[k]]) {
+                        if(i-dx[k]>=0 && i-dx[k]<SIZE && j-dy[k]>=0 && j-dy[k]<SIZE) {
+                            if(bd[i-dx[k]][j-dy[k]] == EMPTY) {
+                                possible_x.push_back(i-dx[k]); possible_y.push_back(j-dy[k]);
+                                return;
                             }
                         }
-                        if(i+1 < SIZE) {
-                            if(bd[i+1][j] == EMPTY) {
-                                possible_x.push_back(i+1);
-                                possible_y.push_back(j);
-                            }
-                        }
-                        if(j-1 >= 0) {
-                            if(bd[i][j-1] == EMPTY) {
-                                possible_x.push_back(i);
-                                possible_y.push_back(j-1);
-                            } 
-                        }
-                        if(j+1 < SIZE) {
-                            if(bd[i][j+1] == EMPTY) {
-                                possible_x.push_back(i);
-                                possible_y.push_back(j+1);
-                            }
-                        }
-                        if(i-1 >= 0 && j-1 >= 0) {
-                            if(bd[i-1][j-1] == EMPTY) {
-                                possible_x.push_back(i-1);
-                                possible_y.push_back(j-1);
-                            }                            
-                        }
-                        if(i-1 >= 0 && j+1 < SIZE) {
-                            if(bd[i-1][j+1] == EMPTY) {
-                                possible_x.push_back(i-1);
-                                possible_y.push_back(j+1);
-                            }                            
-                        }
-                        if(i+1 < SIZE && j-1 >= 0) {
-                            if(bd[i+1][j-1] == EMPTY) {
-                                possible_x.push_back(i+1);
-                                possible_y.push_back(j-1);
-                            }                            
-                        }
-                        if(i+1 < SIZE && j+1 < SIZE) {
-                            if(bd[i+1][j+1] == EMPTY) {
-                                possible_x.push_back(i+1);
-                                possible_y.push_back(j+1);
+                        if(new_x+dx[k]>=0 && new_x+dx[k]<SIZE && new_y+dy[k]>=0 && new_y+dy[k]<SIZE) {
+                            if(bd[new_x+dx[k]][new_y+dy[k]] == EMPTY) {
+                                possible_x.push_back(new_x+dx[k]); possible_y.push_back(new_y+dy[k]);
+                                return;
                             }
                         }
                     }
                 }
             }
         }
-        if(possible_x.empty()) {
-            //未完待續
-            
+
+        //堵路
+        int count, lock, judge = 0;
+        for(int k = 0; k < 4; k++) {
+            count = 1, lock = 0;
+            new_x = last_put.x+dx[k]; new_y = last_put.y+dy[k];
+            while (new_x>=0 && new_x <SIZE && new_y>=0 && new_y<SIZE) {
+                if(bd[new_x][new_y]==bd[last_put.x][last_put.y]) {
+                    count++;
+                }
+                else if(bd[new_x][new_y]==EMPTY) {
+                    if(count==4) {
+                        judge++;
+                        possible_x.push_back(new_x); possible_y.push_back(new_y);
+                        break;
+                    }
+                }
+                else {
+                    lock++;
+                    break;
+                }
+                new_x+=dx[k]; new_y+=dy[k];
+            }
+            new_x = last_put.x-dx[k]; new_y = last_put.y-dy[k];
+            while (new_x>=0 && new_x <SIZE && new_y>=0 && new_y<SIZE) {
+                if(bd[new_x][new_y]==bd[last_put.x][last_put.y]) {
+                    count++;
+                }
+                else if(bd[new_x][new_y]==EMPTY) {
+                    //活三
+                    if(lock==0 && count==3) {
+                        judge++;
+                        possible_x.push_back(new_x); possible_y.push_back(new_y);
+                        possible_x.push_back(new_x+4*dx[k]); possible_y.push_back(new_y+4*dy[k]);
+                        break;
+                    }
+                    //死四
+                    if(lock<=1 && count==4) {
+                        judge++;
+                        possible_x.push_back(new_x); possible_y.push_back(new_y);
+                        break;
+                    }
+                    //變形活三
+                    if(lock==0 && count==2) {
+                        int new2_x = new_x-2*dx[k], new2_y = new_y-2*dy[k];
+                        int new3_x = new_x+5*dx[k], new3_y = new_x+5*dy[k];
+                        if(new2_x>=0 && new2_x<SIZE && new2_y>=0 && new2_y<SIZE) {
+                            if(bd[new2_x][new2_y] == EMPTY) {
+                                judge++;
+                                possible_x.push_back(new_x); possible_y.push_back(new_y);
+                                break;
+                            }
+                        }
+                        if(new3_x>=0 && new3_x<SIZE && new3_y>=0 && new3_y<SIZE) {
+                            if(bd[new3_x][new3_y] == EMPTY) {
+                                judge++;
+                                possible_x.push_back(last_put.x+dx[k]); possible_y.push_back(last_put.y+dy[k]);
+                                break;
+                            }
+                        }
+
+                    }
+                }
+                else {
+                    //死四
+                    lock++;
+                    if(lock==1 && count==4) {
+                        int new4_x = new_x+5*dx[k], new4_y = new_y+5*dy[k];
+                        if(new4_x>=0 && new4_x<SIZE && new4_y>=0 && new4_y<SIZE) {
+                            judge++;
+                            possible_x.push_back(new4_x);  possible_y.push_back(new4_y);
+                            break; 
+                        }
+                    }
+
+                }
+                new_x-=dx[k]; new_y-=dy[k];
+            }
+            if(judge>=2) {
+                end = true;
+                return;
+            }
         }
-    
+        
+        if(possible_x.empty()) {
+            for(int i = 0; i < SIZE; i++) {
+                for(int j = 0; j < SIZE; j++) {
+                    if(bd[i][j] == EMPTY) {
+                        possible_x.push_back(i);
+                        possible_y.push_back(j);
+                    }
+                }
+            }
+        }
+        else return;
+        //全部空白
     }
 };
 
