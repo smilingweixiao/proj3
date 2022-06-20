@@ -3,9 +3,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <array>
-#include <algorithm>
-#include <set>
 #include <vector>
+#include <set>
+#include <algorithm>
 
 using namespace std;
 
@@ -14,22 +14,16 @@ enum SPOT_STATE {
     BLACK = 1,
     WHITE = 2
 };
-
-int player;
-int opponent;
-const int SIZE = 15;
-std::array<std::array<int, SIZE>, SIZE> board;
-
-int dx[4] = {0,1,1,1};
-int dy[4] = {1,0,1,-1};
-const int dep = 1; //必須是奇數
-int m, n;
-
-
 struct Point {
     int x;
     int y;
 };
+int dx[4] = {0,1,1,1};
+int dy[4] = {1,0,1,-1};
+int player;
+int opponent;
+const int SIZE = 15;
+std::array<std::array<int, SIZE>, SIZE> board;
 
 struct Node {
     std::array<std::array<int, SIZE>, SIZE> bd;    //bd
@@ -39,6 +33,21 @@ struct Node {
     Point last_put;
     vector<int> possible_x;
     vector<int> possible_y;
+    //compare
+    void operator=(const Node& rhs) {
+        for(int i = 0; i < SIZE; i++) {
+            for(int j = 0; j < SIZE; j++) {
+                bd[i][j] = rhs.bd[i][j];
+            }
+        }
+        alpha = rhs.alpha; beta = rhs.beta;
+        user = rhs.user;
+        end = rhs.end;
+        last_put.x = rhs.last_put.x;
+        last_put.y = rhs.last_put.y;
+        possible_x = rhs.possible_x;
+        possible_y = rhs.possible_y;
+    }
     Node() {
         alpha = INT32_MIN;
         beta = INT32_MAX;
@@ -46,6 +55,8 @@ struct Node {
         end = false;
         last_put.x = -1;
         last_put.y = -1;
+        possible_x.push_back(-1);
+        possible_y.push_back(-1);
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
                 bd[i][j] = board[i][j];
@@ -67,31 +78,13 @@ struct Node {
         end = node.end;
         last_put.x = x;
         last_put.y = y;
-        possible_x = node.possible_x;
-        possible_y = node.possible_y;
-    }
-    
-    Node(Node node, std::array<std::array<int, SIZE>, SIZE> new_board) {
-        last_put.x = -1, last_put.y = -1;
-        for(int i = 0; i < SIZE; i++) {
-            for(int j = 0; j < SIZE; j++) {
-                bd[i][j] = new_board[i][j];
-                if(new_board[i][j] == opponent && new_board[i][j] != node.bd[i][j]) {
-                    last_put.x = i;
-                    last_put.y = j;
-                    cout << "yes" <<endl;
-                }
-            }
-        }
-        
-        alpha = INT32_MIN;
-        beta = INT32_MAX;
-        end = false;
-        user = player;
+        possible_x.push_back(-1);
+        possible_y.push_back(-1);
     }
     
     //defense
     int calculate() {
+        
         int val = 0;
         int flag = 1;
         for(int i = 0; i < 4; i++) {
@@ -528,43 +521,287 @@ struct Node {
                 }
             }
         }
-
         if(possible_x.empty()) {
             //未完待續
+            
         }
     
     }
 };
 
+//判斷是否防禦
+Point best_1;
+Point best_2;
 
-int alphabeta(Node node, int depth, bool user) {
+bool check() {
+    //橫
+    int lock = 0, count = 0;
+    for(int i = 0; i < SIZE; i++){
+        lock = 0; count = 0;
+        for(int j = 0; j < SIZE; j++) {
+            if(board[i][j] == opponent) {
+                if(j == 0 || j == SIZE-1) {
+                    lock++;
+                }
+                count++;
+            }
+            if(board[i][j] == EMPTY) {
+                //活三
+                if(count == 3 && lock == 0) {
+                    best_1.x = i; best_1.y = j;
+                    best_2.x = i; best_2.y = j-4;
+                    return true;
+                }
+                //死四
+                else if(count == 4) {
+                    best_1.x = i; best_1.y = j;
+                    return true;
+                }
+                count = 0;
+                lock = 0;
+            }
+            else {
+                //死四
+                if(lock == 1 && count == 4) {
+                    best_1.x = i; best_1.y = j-5;
+                    return true;
+                }
+                count = 0;
+                lock = 1;
+            }
+
+        }
+    }
+
+    //豎
+    int lock = 0, count = 0;
+    for(int j = 0; j < SIZE; j++){
+        lock = 0; count = 0;
+        for(int i = 0; i < SIZE; i++) {
+            if(board[i][j] == opponent) {
+                if(j == 0 || j == SIZE-1) {
+                    lock++;
+                }
+                count++;
+            }
+            if(board[i][j] == EMPTY) {
+                //活三
+                if(count == 3 && lock == 0) {
+                    best_1.x = i; best_1.y = j;
+                    best_2.x = i-4; best_2.y = j;
+                    return true;
+                }
+                //死四
+                else if(count == 4) {
+                    best_1.x = i; best_1.y = j;
+                    return true;
+                }
+                count = 0;
+                lock = 0;
+            }
+            else {
+                //死四
+                if(lock == 1 && count == 4) {
+                    best_1.x = i-5; best_1.y = j;
+                    return true;
+                }
+                count = 0;
+                lock = 1;
+            }
+
+        }
+    }
+
+    //捺
+    int lock = 0, count = 0, k;
+    for(int j = 0; j < SIZE; j++){
+        lock = 0; count = 0;
+        k = j;
+        for(int i = 0; i < SIZE && j < SIZE; i++,j++) {
+            if(board[i][j] == opponent) {
+                if(j == 0 || j == SIZE-1) {
+                    lock++;
+                }
+                count++;
+            }
+            if(board[i][j] == EMPTY) {
+                //活三
+                if(count == 3 && lock == 0) {
+                    best_1.x = i; best_1.y = j;
+                    best_2.x = i; best_2.y = j-4;
+                    return true;
+                }
+                //死四
+                else if(count == 4) {
+                    best_1.x = i; best_1.y = j;
+                    return true;
+                }
+                count = 0;
+                lock = 0;
+            }
+            else {
+                //死四
+                if(lock == 1 && count == 4) {
+                    best_1.x = i; best_1.y = j-5;
+                    return true;
+                }
+                count = 0;
+                lock = 1;
+            }
+
+        }
+        j = k;
+    }
     
+    int lock = 0, count = 0, k;
+    for(int i = 1; i < SIZE; i++){
+        lock = 0; count = 0;
+        k = i;
+        for(int j = 0; i < SIZE && j < SIZE; i++,j++) {
+            if(board[i][j] == opponent) {
+                if(j == 0 || j == SIZE-1) {
+                    lock++;
+                }
+                count++;
+            }
+            if(board[i][j] == EMPTY) {
+                //活三
+                if(count == 3 && lock == 0) {
+                    best_1.x = i; best_1.y = j;
+                    best_2.x = i; best_2.y = j-4;
+                    return true;
+                }
+                //死四
+                else if(count == 4) {
+                    best_1.x = i; best_1.y = j;
+                    return true;
+                }
+                count = 0;
+                lock = 0;
+            }
+            else {
+                //死四
+                if(lock == 1 && count == 4) {
+                    best_1.x = i; best_1.y = j-5;
+                    return true;
+                }
+                count = 0;
+                lock = 1;
+            }
+
+        }
+        i = k;
+    }
+
+    //撇
+    int lock = 0, count = 0, k;
+    for(int j = 0; j < SIZE; j++){
+        lock = 0; count = 0;
+        k = j;
+        for(int i = 0; i < SIZE && j >= 0; i++,j--) {
+            if(board[i][j] == opponent) {
+                if(j == 0 || j == SIZE-1) {
+                    lock++;
+                }
+                count++;
+            }
+            if(board[i][j] == EMPTY) {
+                //活三
+                if(count == 3 && lock == 0) {
+                    best_1.x = i; best_1.y = j;
+                    best_2.x = i; best_2.y = j-4;
+                    return true;
+                }
+                //死四
+                else if(count == 4) {
+                    best_1.x = i; best_1.y = j;
+                    return true;
+                }
+                count = 0;
+                lock = 0;
+            }
+            else {
+                //死四
+                if(lock == 1 && count == 4) {
+                    best_1.x = i; best_1.y = j-5;
+                    return true;
+                }
+                count = 0;
+                lock = 1;
+            }
+
+        }
+        j = k;
+    }
+
+    int lock = 0, count = 0, k;
+    for(int i = 0; i < SIZE; i++){
+        lock = 0; count = 0;
+        k = i;
+        for(int j = 1; i < SIZE && j >= 0 ; i++,j--) {
+            if(board[i][j] == opponent) {
+                if(j == 0 || j == SIZE-1) {
+                    lock++;
+                }
+                count++;
+            }
+            if(board[i][j] == EMPTY) {
+                //活三
+                if(count == 3 && lock == 0) {
+                    best_1.x = i; best_1.y = j;
+                    best_2.x = i; best_2.y = j-4;
+                    return true;
+                }
+                //死四
+                else if(count == 4) {
+                    best_1.x = i; best_1.y = j;
+                    return true;
+                }
+                count = 0;
+                lock = 0;
+            }
+            else {
+                //死四
+                if(lock == 1 && count == 4) {
+                    best_1.x = i; best_1.y = j-5;
+                    return true;
+                }
+                count = 0;
+                lock = 1;
+            }
+
+        }
+        i = k;
+    }
+
+    return false;
+}
+
+ 
+int depth = 1;
+int first;
+
+int alphabeta(Node node, int d) {
     node.which_to_go();
     if(node.end) {
         if(node.user == player) return INT32_MIN;
         else return INT32_MAX;
     }
-    if(depth == 0) return node.calculate();
-    int val;
-    if(user) {
-        val = INT32_MIN;
-        int len = node.possible_x.size();
+    if(d == 0) return node.calculate();
+    int len = node.possible_x.size();
+    if(node.user == player) {
+        int val = INT32_MIN;
         for(int i = 0; i < len; i++) {
-            val = max(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], player), depth-1, false));
-            if(val > node.alpha && depth == dep) {
-                    m = node.possible_x[i];
-                    n = node.possible_y[i];
-            }
+            val = max(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], player), d-1));
             node.alpha = max(node.alpha, val);
             if(node.alpha >= node.beta) break;
         }
         return val;
     }
     else {
-        val = INT32_MAX;
-        int len = node.possible_x.size();
+        int val = INT32_MAX;
         for(int i = 0; i < len; i++) {
-            val = min(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], opponent), depth-1, true));
+            val = min(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], opponent), d-1));
             node.beta = min(node.beta, val);
             if(node.alpha >= node.beta) break;
         }
@@ -572,44 +809,83 @@ int alphabeta(Node node, int depth, bool user) {
     }
 }
 
-void minmax() {
-
-
-
-
-}
-
-
 void read_board(std::ifstream& fin) {
+    first = 1;
     fin >> player;
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             fin >> board[i][j];
+            if(board[i][j] != EMPTY) first = 0;
         }
     }
     if(player == BLACK) opponent = WHITE;
     else opponent = BLACK;
 }
+
+
 void write_valid_spot(std::ofstream& fout) {
-    //srand(time(NULL));
+    
     // Keep updating the output until getting killed.
-    bool flag = false;
-    //要初始化空白棋盤
-    Node root;
+    
     while(true) {
+        // Choose a random spot.
         int x, y;
-        if(board[7][7] == EMPTY && player == BLACK) {
+        Node root;
+        best_1.x = -1; best_1.y = -1;
+        best_2.x = -1; best_2.y = -1;
+        if(first && player == BLACK) {
             x = 7, y = 7;
         }
         else {
+            if(check()) {
+                if(best_2.x != -1) {
+                    Node n1 = Node(root, best_1.x, best_1.y, player);
+                    int val_1 = n1.calculate();
+                    Node n2 = Node(root, best_2.x, best_2.y, player);
+                    int val_2 = n2.calculate();
+                    if(val_1 >= val_2) {
+                        fout << best_1.x << " " << best_1.y << std::endl;
+                        // Remember to flush the output to ensure the last action is written to file.
+                        fout.flush();
+                    }
+                    else {
+                        fout << best_2.x << " " << best_2.y << std::endl;
+                        // Remember to flush the output to ensure the last action is written to file.
+                        fout.flush();
+                    }
+                    
+                }
+                else {
+                    fout << best_1.x << " " << best_1.y << std::endl;
+                    // Remember to flush the output to ensure the last action is written to file.
+                    fout.flush();
+                }
+            }
+            else {
+                int val = INT32_MIN;
+                for(int i = 0; i < SIZE; i++) {
+                    for(int j = 0; j < SIZE; j++) {
+                        if(board[i][j] != EMPTY) continue;
+                        val = max(val, alphabeta(Node(root, i, j, player), depth-1));
+                    
+                        if(val > root.alpha) {
+                            x = i; y = j;
+                            root.alpha = val;
+                        }
+                    }
+                }
+                if (board[x][y] == EMPTY) {
+                    fout << x << " " << y << std::endl;
+                    // Remember to flush the output to ensure the last action is written to file.
+                    fout.flush();
+                }
+            }
             
         }
-        if (board[x][y] == EMPTY) {
-            fout << x << " " << y << std::endl;
-            fout.flush();
-        }  
+        
     }
 }
+
 int main(int, char** argv) {
     std::ifstream fin(argv[1]);
     std::ofstream fout(argv[2]);
