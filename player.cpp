@@ -33,6 +33,8 @@ struct Node {
     std::array<std::array<int, SIZE>, SIZE> bd;    //bd
     int isline[SIZE][SIZE][4];
     int alpha, beta;
+    vector<int> possible_x;
+    vector<int> possible_y;
     int cnt;
     Node() {
         cnt = 0;
@@ -55,64 +57,307 @@ struct Node {
         bd[x][y] = color;
         alpha = node.alpha; beta = node.beta;
     }
-    int setHeuristic() {
-        int val = 0;
-        int new1_x, new2_x, new3_x, new4_x;
-        int new1_y, new2_y, new3_y, new4_y;
-        //initialize
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                for (int k = 0; k < 4; k++) {
-                    isline[i][j][k] = 0;
-                }
+    //defense
+    void find_possiblity() {
+        possible_x.clear();
+        possible_y.clear();
+        int new_x = new_opponent.x, new_y = new_opponent.y;
+        int count, lock, judge;
+        //橫
+        count = 1; lock = 0; judge = 0;
+        new_x = new_opponent.x; new_y = new_opponent.y;
+        new_y--;
+        while(new_y >= 0 && new_y < SIZE) {
+            if(bd[new_x][new_y] == opponent) {
+                count++;
+                new_y--;
+            }
+            else if(bd[new_x][new_y] == player) {
+                lock++;
+                judge++;
+                break;
+            }
+            else {
+                judge++;
+                break;
             }
         }
-        //calculate
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                for (int k = 0; k < 4; k++) {
-                    if(isline[i][j][k]) continue;
-                    if(board[i][j] == EMPTY) continue;
-                    new1_x = i+dx[k]; new2_x = i+dx[k]*2; 
-                    new3_x = i+dx[k]*3; new4_x = i+dx[k]*4;
-                    new1_y = j+dy[k]; new2_y = j+dy[k]*2;
-                    new3_y = j+dy[k]*3; new4_y = j+dy[k]*4;
-                    if(new2_x>=0 && new2_x<SIZE && new2_y>=0 && new2_y<SIZE && bd[i][j] == player) {
-                        if(bd[i][j] == bd[new1_x][new1_y] && bd[i][j] == bd[new2_x][new2_y]){
-                            val++;
-                            isline[i][j][k] = isline[new1_x][new1_y][k] = isline[new2_x][new2_y][k] = 1;
-                            if(new3_x >= 0 && new3_x < SIZE && new3_y >= 0 && new3_y < SIZE) {
-                                if(bd[i][j] == bd[new3_x][new3_y])
-                                    isline[new3_x][new3_y][k] = 1;
-                            }
-                            if(new4_x >= 0 && new4_x < SIZE && new4_y >= 0 && new4_y < SIZE) {
-                                if(bd[i][j] == bd[new4_x][new4_y])
-                                    isline[new4_x][new4_y][k] = 1;
-                            }
-                            
-                        }
-                    }
-                    else if(new3_x>=0 && new3_x<SIZE && new3_y>=0 && new3_y<SIZE) {
-                        if(bd[i][j] == bd[new1_x][new1_y] && bd[i][j] == bd[new2_x][new2_y]){
-                            val--;
-                            isline[i][j][k] = isline[new1_x][new1_y][k] = isline[new2_x][new2_y][k] = 1;
-                            if(new4_x >= 0 && new4_x < SIZE && new4_y >= 0 && new4_y < SIZE) {
-                                if(bd[i][j] == bd[new4_x][new4_y])
-                                    isline[new4_x][new4_y][k] = 1;
-                            }
-                            
-                        }
-                    }
+        new_x = new_opponent.x; new_y = new_opponent.y;
+        new_y++;
+        while(new_y >= 0 && new_y < SIZE) {
+            if(bd[new_x][new_y] == opponent) {
+                count++;
+                new_y++;
+            }
+            else if(bd[new_x][new_y] == player) {
+                lock++;
+                judge++;
+                //死四
+                if(lock==1 && count==4) {
+                    m = new_x;
+                    n = new_y-5;
+                    return;
                 }
+                break;
+            }
+            else {
+                judge++;
+                //死四
+                if(lock==1 && count==4) {
+                    m = new_x;
+                    n = new_y;
+                    return;
+                }
+                //活三
+                if(lock==0 && count==3) {
+                    possible_x.clear();
+                    possible_y.clear();
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y);
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y-4);
+                    return;
+                }
+                //活二
+                if(lock==0 && count==2) {
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y);
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y-3);
+                }
+                break;
             }
         }
-        return val;
+
+        
+        //豎
+        count = 1; lock = 0; judge = 0;
+        new_x = new_opponent.x; new_y = new_opponent.y;
+        new_x--;
+        while(new_x >= 0 && new_x < SIZE) {
+            if(bd[new_x][new_y] == opponent) {
+                count++;
+                new_x--;
+            }
+            else if(bd[new_x][new_y] == player) {
+                lock++;
+                judge++;
+                break;
+            }
+            else {
+                judge++;
+                break;
+            }
+        }
+        new_x = new_opponent.x; new_y = new_opponent.y;
+        new_x++;
+        while(new_y >= 0 && new_y < SIZE) {
+            if(bd[new_x][new_y] == opponent) {
+                count++;
+                new_x++;
+            }
+            else if(bd[new_x][new_y] == player) {
+                lock++;
+                judge++;
+                //死四
+                if(lock == 1&&count==4) {
+                    m = new_x-5;
+                    n = new_y;
+                    return;
+                }
+                break;
+            }
+            else {
+                judge++;
+                //死四
+                if(lock==1 && count==4) {
+                    m = new_x;
+                    n = new_y;
+                    return;
+                }
+                //活三
+                if(lock==0 && count==3) {
+                    possible_x.clear();
+                    possible_y.clear();
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y);
+                    possible_x.push_back(new_x-4);
+                    possible_y.push_back(new_y);
+                    return;
+                }
+                //活二
+                if(lock==0 && count==2) {
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y);
+                    possible_x.push_back(new_x-3);
+                    possible_y.push_back(new_y);
+                }
+                break;
+            }
+        }
+
+
+        //撇
+        count = 1; lock = 0; judge = 0;
+        new_x = new_opponent.x; new_y = new_opponent.y;
+        new_x++; new_y--;
+        while(new_x >= 0 && new_x < SIZE && new_y >= 0 && new_y < SIZE) {
+            if(bd[new_x][new_y] == opponent) {
+                count++;
+                new_x++;
+                new_y--;
+            }
+            else if(bd[new_x][new_y] == player) {
+                lock++;
+                judge++;
+                break;
+            }
+            else {
+                judge++;
+                break;
+            }
+        }
+        new_x = new_opponent.x; new_y = new_opponent.y;
+        new_x--; new_y++;
+        while(new_x >= 0 && new_x < SIZE && new_y >= 0 && new_y < SIZE) {
+            if(bd[new_x][new_y] == opponent) {
+                count++;
+                new_x--;
+                new_y++;
+            }
+            else if(bd[new_x][new_y] == player) {
+                lock++;
+                judge++;
+                //死四
+                if(lock==1 && count==4) {
+                    m = new_x+5;
+                    n = new_y-5;
+                    return;
+                }
+                break;
+            }
+            else {
+                judge++;
+                //死四
+                if(lock==1 && count==4) {
+                    m = new_x;
+                    n = new_y;
+                    return;
+                }
+                //活三
+                if(lock==0 && count==3) {
+                    possible_x.clear();
+                    possible_y.clear();
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y);
+                    possible_x.push_back(new_x+4);
+                    possible_y.push_back(new_y-4);
+                    return;
+                }
+                //活二
+                if(lock==0 && count==2) {
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y);
+                    possible_x.push_back(new_x+3);
+                    possible_y.push_back(new_y-3);
+                }
+                break;
+            }
+        }
+
+    
+        //捺
+        count = 1; lock = 0; judge = 0;
+        new_x = new_opponent.x; new_y = new_opponent.y;
+        new_x++; new_y++;
+        while(new_x >= 0 && new_x < SIZE && new_y >= 0 && new_y < SIZE) {
+            if(bd[new_x][new_y] == opponent) {
+                count++;
+                new_x++;
+                new_y++;
+            }
+            else if(bd[new_x][new_y] == player) {
+                lock++;
+                judge++;
+                break;
+            }
+            else {
+                judge++;
+                break;
+            }
+        }
+        new_x = new_opponent.x; new_y = new_opponent.y;
+        new_x--; new_y--;
+        while(new_x >= 0 && new_x < SIZE && new_y >= 0 && new_y < SIZE) {
+            if(bd[new_x][new_y] == opponent) {
+                count++;
+                new_x--;
+                new_y--;
+            }
+            else if(bd[new_x][new_y] == player) {
+                lock++;
+                judge++;
+                //死四
+                if(lock==1 && count==4) {
+                    m = new_x+5;
+                    n = new_y+5;
+                    return;
+                }
+                break;
+            }
+            else {
+                judge++;
+                //死四
+                if(lock==1 && count==4) {
+                    m = new_x;
+                    n = new_y;
+                    return;
+                }
+                //活三
+                if(lock==0 && count==3) {
+                    possible_x.clear();
+                    possible_y.clear();
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y);
+                    possible_x.push_back(new_x+4);
+                    possible_y.push_back(new_y+4);
+                    return;
+                }
+                //活二
+                if(lock==0 && count==2) {
+                    possible_x.push_back(new_x);
+                    possible_y.push_back(new_y);
+                    possible_x.push_back(new_x+3);
+                    possible_y.push_back(new_y+3);
+                }
+                break;
+            }
+        }
+    
+    }
+    int calculate() {
+
     }
 
 };
 
+void check(int x, int y, int color) {
+    if(color == player) {
+
+    }
+    else{
+
+    }
+}
+
+Node root;
+Point new_opponent;
+
 int alphabeta(Node node, int depth, bool user) {
     if(depth == 0) return node.setHeuristic();
+    if(depth == dep) {
+
+    }
     int val;
     if(user) {
         val = INT32_MIN;
@@ -161,19 +406,35 @@ void write_valid_spot(std::ofstream& fout, std::ifstream& fin) {
     srand(time(NULL));
     //int x = -1, y = -1, val;
     // Keep updating the output until getting killed.
-    
+    bool flag = false;
+    //要初始化空白棋盤
     while(true){
-        
-        Node node;
-        alphabeta(node,dep,true);
-        int x = m;
-        int y = n;
+        int x, y;
         if(board[7][7] == EMPTY) {
             x = 7, y = 7;
         }
+        else {
+            flag = false;
+            for(int i = 0; i < SIZE; i++) {
+                for(int j = 0; j < SIZE; j++) {
+                    if(root.bd[i][j] != board[i][j] && board[i][j] == opponent) {
+                        flag = true;
+                        new_opponent.x = i;
+                        new_opponent.y = j;
+                        break;
+                    }
+                }
+                if(flag) break;
+            }
+            if(!flag) continue;
+            root = Node();
+            alphabeta(root,dep,true);
+            int x = m;
+            int y = n;
+        }
         //蒲月局
         //花月
-        else if(player == BLACK) {
+        /*else if(player == BLACK) {
             if(node.cnt == 1) {
                 if(board[8][8] == opponent){
                     x = 6; y = 8;
@@ -201,7 +462,7 @@ void write_valid_spot(std::ofstream& fout, std::ifstream& fin) {
                     x = 8; y = 8;
                 }
             }
-        }
+        }*/
         if (board[x][y] == EMPTY) {
             fout << x << " " << y << std::endl;
             fout.flush();
