@@ -24,7 +24,7 @@ int player;
 int opponent;
 const int SIZE = 15;
 std::array<std::array<int, SIZE>, SIZE> board;
-int depth = 3;
+int depth = 5;
 int first;
 Point bl;
 
@@ -181,8 +181,10 @@ struct Node {
                 }
                 else {
                     if(lock==1 && count==4) val+=20;
-                    else if(lock==1 && count>=2 && (i==0 || i==1)) val+=1;
-                    else if(lock==1 && count>=2) val+=2;
+                    else if(lock==1 && count==2 && (i==0 || i==1)) val+=1;
+                    else if(lock==1 && count==3 && (i==0 || i==1)) val+=3;
+                    else if(lock==1 && count==2) val+=2;
+                    else if(lock==1 && count==3) val+=5;
                     //else if(lock==1 && (i==0||i==1)) val-=1;
                     //else if(lock==1) val-=2;
                     break;
@@ -197,8 +199,9 @@ struct Node {
         
         int enemys = 0;
         int count = 0;
+        int hole = 0;
         for(int i = 0; i < 4; i++) {
-
+            count = 0;
             int new_x = last_put.x+dx[i], new_y = last_put.y+dy[i];
             if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) 
                 if(bd[new_x][new_y]!=bd[last_put.x][last_put.y]&&bd[new_x][new_y]!=EMPTY) {
@@ -207,13 +210,14 @@ struct Node {
                 }
                     
                 
-            if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) 
+            if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
+                if(bd[new_x][new_y]==EMPTY) hole++;
                 if(bd[new_x][new_y]!=bd[last_put.x][last_put.y]&&bd[new_x][new_y]!=EMPTY) {
                     new_x+=dx[i]; new_y+=dy[i];
                     count++;
                 }
+            }
                     
-            
             
             new_x = last_put.x-dx[i], new_y = last_put.y-dy[i];
             if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) 
@@ -222,17 +226,19 @@ struct Node {
                     count++;
                 }
 
-            if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) 
+            if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
+                if(bd[new_x][new_y]==EMPTY) hole++; 
                 if(bd[new_x][new_y]!=bd[last_put.x][last_put.y]&&bd[new_x][new_y]!=EMPTY) {
                     new_x-=dx[i]; new_y-=dy[i];
                     count++;
                 }
-                    
-    
+            }
+            //堵活三        
+            if(hole==2 && count==2)val+=15;
             if(count>=2) enemys++;
         }
+        //雙三
         if(enemys >= 2) val+=30;
-        else if(enemys >= 1) val+=15;
         return val;
     }
     void which_to_go() {
@@ -437,6 +443,7 @@ Point best_1;//死四
 Point best_2;//活三
 Point best_3;//必勝
 Point best_4;//空格
+Point best_5;//雙三必堵
 Node root = Node();
 
 bool check() {
@@ -446,6 +453,8 @@ bool check() {
     best_2.x = -1; best_2.y = -1;
     best_3.x = -1; best_3.y = -1;
     best_4.x = -1; best_4.y = -1;
+    best_5.x = -1; best_5.y = -1;
+    
   
     douthr.x = -1;
     douthr.y = -1;
@@ -496,8 +505,7 @@ bool check() {
         }
     }
 
-    //需擋有空格
-    
+    //需擋有空格   
     for(int i = 0; i < SIZE; i++) {
         for(int j = 0; j < SIZE; j++) {
             douthree = 0;
@@ -531,8 +539,8 @@ bool check() {
                 if(count>=2 && lock==0) {
                     
                     if(douthree) {
-                        best_1.x = i;
-                        best_1.y = j;
+                        best_5.x = i;
+                        best_5.y = j;
                         //return true;
                     }
                     douthree++;
@@ -981,10 +989,14 @@ bool check() {
         best_2.x = -1; best_2.y = -1;
         return true;
     }
+    else if(best_5.x != -1) {
+        best_1.x = best_5.x; best_1.y = best_5.y;
+        best_2.x = best_2.y = best_4.x = best_4.y = -1;
+        return true;
+    }
     else if(best_1.x != -1) {
         return true;
     }
-
     else if(douthr.x != -1) {
         //cout<<"seven"<<endl;
         best_1.x = douthr.x;
