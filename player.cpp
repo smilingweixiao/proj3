@@ -123,10 +123,10 @@ struct Node {
                 }
                 else {
                     if(i==0 || i==1) {
-                        val-=1;
+                    //    val-=1;
                     }
                     else {
-                        val-=2;
+                    //    val-=2;
                     }
                     break;
                 }
@@ -145,8 +145,8 @@ struct Node {
                 else if(bd[new_x][new_y] == EMPTY) {
                     lock--;
                     if(lock==0 && count ==4) return INT32_MAX;
-                    else if(lock==0 && count ==3) val+=25;
-                    else if(lock==1 && count==4) val+=25;
+                    else if(lock==0 && count ==3) val+=20;
+                    else if(lock==1 && count==4) val+=20;
                     else if(lock==0 && count==1) {
                         if(new_x+4*dx[i]>=0 && new_x+4*dx[i]<SIZE && new_y+4*dy[i]>=0 && new_y+4*dy[i]<SIZE){
                             if(val>=2 && bd[new_x+4*dx[i]][new_y+4*dy[i]]==EMPTY && bd[new_x+3*dx[i]][new_y+3*dy[i]]==bd[last_put.x][last_put.y]) {
@@ -183,8 +183,8 @@ struct Node {
                     if(lock==1 && count==4) val+=20;
                     else if(lock==1 && count>=2 && (i==0 || i==1)) val+=1;
                     else if(lock==1 && count>=2) val+=2;
-                    else if(lock==1 && (i==0||i==1)) val-=1;
-                    else if(lock==1) val-=2;
+                    //else if(lock==1 && (i==0||i==1)) val-=1;
+                    //else if(lock==1) val-=2;
                     break;
                 }
             }
@@ -435,11 +435,15 @@ struct Node {
 //判斷是否防禦
 Point best_1;
 Point best_2;
+Point best_3;
 Node root = Node();
 
 bool check() {
 
     Point douthr;
+    best_1.x = -1; best_1.y = -1;
+    best_2.x = -1; best_2.y = -1;
+    best_3.x = -1; best_3.y = -1;
     douthr.x = -1;
     douthr.y = -1;
     //勝利
@@ -448,11 +452,12 @@ bool check() {
         for(int j = 0; j < SIZE; j++) {
             douthree = 0;
             for(int k = 0; k < 4; k++) {
-                count = 1;
+                count = 1, lock = 2;
                 if(board[i][j] != EMPTY) break;
                 new_x = i+dx[k];
                 new_y = j+dy[k];
                 while(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
+                    if(board[new_x][new_y] == EMPTY) lock--;
                     if(board[new_x][new_y] != player) break;
                     count++;
                     new_x+=dx[k];
@@ -461,6 +466,7 @@ bool check() {
                 new_x = i-dx[k];
                 new_y = j-dy[k];
                 while(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
+                    if(board[new_x][new_y] == EMPTY) lock--;
                     if(board[new_x][new_y] != player) break;
                     count++;
                     new_x-=dx[k];
@@ -470,6 +476,17 @@ bool check() {
                     best_1.x = i;
                     best_1.y = j;
                     return true;
+                }
+                if(count>=3 && lock==0) {
+                    if(count==4) {
+                        best_3.x = i;
+                        best_3.y = j;
+                    }
+                    if(douthree) {
+                        douthr.x = i;
+                        douthr.y = j;
+                    }
+                    douthree++;
                 }
                     
             }
@@ -482,7 +499,7 @@ bool check() {
         for(int j = 0; j < SIZE; j++) {
             douthree = 0;
             for(int k = 0; k < 4; k++) {
-                count = 1, lock = 2;
+                count = 0, lock = 2;
                 if(board[i][j] != EMPTY) break;
                 new_x = i+dx[k];
                 new_y = j+dy[k];
@@ -502,18 +519,22 @@ bool check() {
                     new_x-=dx[k];
                     new_y-=dy[k];
                 }
-                if(count >= 5) {
+                if(count >= 4) {
                     best_1.x = i;
                     best_1.y = j;
                     return true;
                 }
-                if(count==3 && lock==0) {
+                //雙三
+                if(count>=2 && lock==0) {
+                    
                     if(douthree) {
-                        douthr.x = i;
-                        douthr.y = j;
+                        best_1.x = i;
+                        best_1.y = j;
+                        //return true;
                     }
                     douthree++;
                 }
+                
                     
             }
         }
@@ -532,7 +553,7 @@ bool check() {
                 if(lock==0 && count==4) {
                     best_1.x = i;
                     best_1.y = j-4;
-                    return true;
+                    //return true;
                 }
             }
             else if(board[i][j] == EMPTY) {
@@ -540,7 +561,7 @@ bool check() {
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
                     best_2.x = i; best_2.y = j-4;
-                    return true;
+                    //return true;
                 }
                 //死四
                 else if(count == 4) {
@@ -553,14 +574,14 @@ bool check() {
                         if(board[i][j-4] == opponent) {
                             best_1.x = i;
                             best_1.y = j-3;
-                            return true;
+                            //return true;
                         }
                     }
                     if(j+1 < SIZE) {
                         if(board[i][j+1] == opponent) {
                             best_1.x = i;
                             best_1.y = j;
-                            return true;
+                            //return true;
                         }
                     }
                     root.possible_x.push_back(i); root.possible_y.push_back(j);
@@ -596,7 +617,7 @@ bool check() {
                 if(lock==0 && count==4) {
                     best_1.x = i-4;
                     best_1.y = j;
-                    return true;
+                    //return true;
                 }
             }
             else if(board[i][j] == EMPTY) {
@@ -604,7 +625,7 @@ bool check() {
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
                     best_2.x = i-4; best_2.y = j;
-                    return true;
+                    //return true;
                 }
                 //死四
                 else if(count == 4) {
@@ -617,14 +638,14 @@ bool check() {
                         if(board[i-4][j] == opponent) {
                             best_1.x = i-3;
                             best_1.y = j;
-                            return true;
+                            //return true;
                         }
                     }
                     if(i+1 < SIZE) {
                         if(board[i+1][j] == opponent) {
                             best_1.x = i;
                             best_1.y = j;
-                            return true;
+                            //return true;
                         }
                     }
                     root.possible_x.push_back(i); root.possible_y.push_back(j);
@@ -662,7 +683,7 @@ bool check() {
                 if(lock==0 && count==4) {
                     best_1.x = i-4;
                     best_1.y = j-4;
-                    return true;
+                    //return true;
                 }
             }
             else if(board[i][j] == EMPTY) {
@@ -670,7 +691,7 @@ bool check() {
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
                     best_2.x = i-4; best_2.y = j-4;
-                    return true;
+                    //return true;
                 }
                 //死四
                 else if(count == 4) {
@@ -683,14 +704,14 @@ bool check() {
                         if(board[i+1][j+1] == opponent) {
                             best_1.x = i;
                             best_1.y = j;
-                            return true;
+                            //return true;
                         }
                     }
                     if(j-4 >= 0 && i-4 >= 0) {
                         if(board[i-4][j-4] == opponent) {
                             best_1.x = i-3;
                             best_1.y = j-3;
-                            return true;
+                            //return true;
                         }
                     }
                     root.possible_x.push_back(i); root.possible_y.push_back(j);
@@ -716,6 +737,7 @@ bool check() {
     
     lock = 0; count = 0;
     for(int i = 1; i < SIZE; i++){
+        //cout<<"four"<<endl;
         lock = 0; count = 0;
         k = i;
         for(int j = 0; i < SIZE && j < SIZE; i++,j++) {
@@ -735,7 +757,7 @@ bool check() {
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
                     best_2.x = i-4; best_2.y = j-4;
-                    return true;
+                    //return true;
                 }
                 //死四
                 else if(count == 4) {
@@ -748,14 +770,14 @@ bool check() {
                         if(board[i+1][j+1] == opponent) {
                             best_1.x = i;
                             best_1.y = j;
-                            return true;
+                            //return true;
                         }
                     }
                     if(j-4 >= 0 && i-4 >= 0) {
                         if(board[i-4][j-4] == opponent) {
                             best_1.x = i-3;
                             best_1.y = j-3;
-                            return true;
+                            //return true;
                         }
                     }
                     root.possible_x.push_back(i); root.possible_y.push_back(j);
@@ -782,6 +804,7 @@ bool check() {
     //撇
     lock = 0; count = 0;
     for(int j = 0; j < SIZE; j++){
+        //cout<<"five"<<endl;
         lock = 0; count = 0;
         k = j;
         for(int i = 0; i < SIZE && j >= 0; i++,j--) {
@@ -801,7 +824,7 @@ bool check() {
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
                     best_2.x = i-4; best_2.y = j+4;
-                    return true;
+                    //return true;
                 }
                 //死四
                 else if(count == 4) {
@@ -814,7 +837,7 @@ bool check() {
                         if(board[i+1][j-1] == opponent) {
                             best_1.x = i;
                             best_1.y = j;
-                            return true;
+                            //return true;
                         }
                     }
                     if(j+4 < SIZE && i-4 >= 0) {
@@ -847,6 +870,7 @@ bool check() {
 
     lock = 0; count = 0;
     for(int i = 1; i < SIZE; i++){
+        //cout<<"six"<<endl;
         lock = 0; count = 0;
         k = i;
         for(int j = SIZE-1; i < SIZE && j >= 0 ; i++,j--) {
@@ -866,7 +890,7 @@ bool check() {
                 if(count == 3 && lock == 0) {
                     best_1.x = i; best_1.y = j;
                     best_2.x = i-4; best_2.y = j+4;
-                    return true;
+                    //return true;
                 }
                 //死四
                 else if(count == 4) {
@@ -879,14 +903,14 @@ bool check() {
                         if(board[i+1][j-1] == opponent) {
                             best_1.x = i;
                             best_1.y = j;
-                            return true;
+                            //return true;
                         }
                     }
                     if(j+4 < SIZE && i-4 >= 0) {
                         if(board[i-4][j+4] == opponent) {
                             best_1.x = i-3;
                             best_1.y = j+3;
-                            return true;
+                            //return true;
                         }
                     }
                     root.possible_x.push_back(i); root.possible_y.push_back(j);
@@ -910,7 +934,18 @@ bool check() {
         i = k;
     }
     
-    if(douthr.x != -1) {
+    if(best_3.x != -1) {
+        best_1.x = best_3.x;
+        best_1.y = best_3.y;
+        best_2.x = -1; best_2.y = -1;
+        return true;
+    }
+    else if(best_1.x != -1) {
+        return true;
+    }
+
+    else if(douthr.x != -1) {
+        //cout<<"seven"<<endl;
         best_1.x = douthr.x;
         best_1.y = douthr.y;
         return true;
