@@ -24,7 +24,7 @@ int player;
 int opponent;
 const int SIZE = 15;
 std::array<std::array<int, SIZE>, SIZE> board;
-int depth = 5;
+int depth = 3;
 int first;
 Point bl;
 
@@ -433,9 +433,10 @@ struct Node {
 };
 
 //判斷是否防禦
-Point best_1;
-Point best_2;
-Point best_3;
+Point best_1;//死四
+Point best_2;//活三
+Point best_3;//必勝
+Point best_4;//空格
 Node root = Node();
 
 bool check() {
@@ -444,6 +445,8 @@ bool check() {
     best_1.x = -1; best_1.y = -1;
     best_2.x = -1; best_2.y = -1;
     best_3.x = -1; best_3.y = -1;
+    best_4.x = -1; best_4.y = -1;
+  
     douthr.x = -1;
     douthr.y = -1;
     //勝利
@@ -570,17 +573,25 @@ bool check() {
                 }
                 //活三變形
                 if(lock==0 && count==2) {
-                    if(j-4 >= 0) {
-                        if(board[i][j-4] == opponent) {
+                    if(j-5 >= 0) {
+                        if(board[i][j-4]==opponent && board[i][j-5]==EMPTY) {
                             best_1.x = i;
                             best_1.y = j-3;
+                            best_2.x = i;
+                            best_2.y = j;
+                            best_4.x = i;
+                            best_4.y = j-5;
                             //return true;
                         }
                     }
-                    if(j+1 < SIZE) {
-                        if(board[i][j+1] == opponent) {
+                    if(j+2 < SIZE) {
+                        if(board[i][j+1]==opponent && board[i][j+2]==EMPTY) {
                             best_1.x = i;
                             best_1.y = j;
+                            best_2.x = i;
+                            best_2.y = j+2;
+                            best_4.x = i;
+                            best_4.y = j-3;
                             //return true;
                         }
                     }
@@ -634,17 +645,25 @@ bool check() {
                 }
                 //活三變形
                 if(lock==0 && count==2) {
-                    if(i-4 >= 0) {
-                        if(board[i-4][j] == opponent) {
+                    if(i-5 >= 0) {
+                        if(board[i-4][j] == opponent && board[i-5][j]==EMPTY) {
                             best_1.x = i-3;
                             best_1.y = j;
+                            best_2.x = i;
+                            best_2.y = j;
+                            best_4.x = i-5;
+                            best_4.y = j;
                             //return true;
                         }
                     }
-                    if(i+1 < SIZE) {
-                        if(board[i+1][j] == opponent) {
+                    if(i+2 < SIZE) {
+                        if(board[i+1][j] == opponent && board[i+2][j]==EMPTY) {
                             best_1.x = i;
                             best_1.y = j;
+                            best_2.x = i+2;
+                            best_2.y = j;
+                            best_4.x = i-3;
+                            best_4.y = j;
                             //return true;
                         }
                     }
@@ -700,17 +719,25 @@ bool check() {
                 }
                 //活三變形
                 if(lock==0 && count==2) {
-                    if(j+1 < SIZE && i+1 <SIZE) {
-                        if(board[i+1][j+1] == opponent) {
+                    if(j+2 < SIZE && i+2 <SIZE) {
+                        if(board[i+1][j+1] == opponent && board[i+2][j+2] == EMPTY) {
                             best_1.x = i;
                             best_1.y = j;
+                            best_2.x = i+2;
+                            best_2.y = j+2;
+                            best_4.x = i-3;
+                            best_4.y = j-3;
                             //return true;
                         }
                     }
-                    if(j-4 >= 0 && i-4 >= 0) {
-                        if(board[i-4][j-4] == opponent) {
+                    if(j-5 >= 0 && i-5 >= 0) {
+                        if(board[i-4][j-4] == opponent && board[i-5][j-5]==EMPTY) {
                             best_1.x = i-3;
                             best_1.y = j-3;
+                            best_2.x = i;
+                            best_2.y = j;
+                            best_4.x = i-5;
+                            best_4.y = j-5;
                             //return true;
                         }
                     }
@@ -765,23 +792,29 @@ bool check() {
                     return true;
                 }
                 //活三變形
-                if(lock==0 && count==2) {
-                    if(j+1 < SIZE && i+1 <SIZE) {
-                        if(board[i+1][j+1] == opponent) {
+                if(lock==0 && count==2){
+                    if(j+2 < SIZE && i+2 <SIZE) {
+                        if(board[i+1][j+1] == opponent && board[i+2][j+2] == EMPTY) {
                             best_1.x = i;
                             best_1.y = j;
+                            best_2.x = i+2;
+                            best_2.y = j+2;
+                            best_4.x = i-3;
+                            best_4.y = j-3;
                             //return true;
                         }
                     }
-                    if(j-4 >= 0 && i-4 >= 0) {
-                        if(board[i-4][j-4] == opponent) {
+                    if(j-5 >= 0 && i-5 >= 0) {
+                        if(board[i-4][j-4] == opponent && board[i-5][j-5]==EMPTY) {
                             best_1.x = i-3;
                             best_1.y = j-3;
+                            best_2.x = i;
+                            best_2.y = j;
+                            best_4.x = i-5;
+                            best_4.y = j-5;
                             //return true;
                         }
                     }
-                    root.possible_x.push_back(i); root.possible_y.push_back(j);
-                    root.possible_x.push_back(i-3); root.possible_y.push_back(j-3);
                 }
                 count = 0;
                 lock = 0;
@@ -833,18 +866,26 @@ bool check() {
                 }
                 //活三變形
                 else if(lock==0 && count==2) {
-                    if(j-1 >= 0 && i+1 <SIZE) {
-                        if(board[i+1][j-1] == opponent) {
+                    if(j-2 >= 0 && i+2 <SIZE) {
+                        if(board[i+1][j-1] == opponent && board[i+2][j-2]) {
                             best_1.x = i;
                             best_1.y = j;
+                            best_2.x = i+2;
+                            best_2.y = j-2;
+                            best_4.x = i-3;
+                            best_4.y = j+3;
                             //return true;
                         }
                     }
-                    if(j+4 < SIZE && i-4 >= 0) {
-                        if(board[i-4][j+4] == opponent) {
+                    if(j+5 < SIZE && i-5 >= 0) {
+                        if(board[i-5][j+5] == opponent && board[i-5][j+5]) {
                             best_1.x = i-3;
                             best_1.y = j+3;
-                            return true;
+                            best_2.x = i-5;
+                            best_2.y = j+5;
+                            best_4.x = i;
+                            best_4.y = j;
+                            //return true;
                         }
                     }
                     root.possible_x.push_back(i); root.possible_y.push_back(j);
@@ -1029,14 +1070,38 @@ void write_valid_spot(std::ofstream& fout) {
                     Node n2 = Node(root, best_2.x, best_2.y, player);
                     int val_2 = n2.calculate();
                     if(val_1 >= val_2) {
-                        x = best_1.x;
-                        y = best_1.y;
+                        if(best_4.x!=-1) {
+                            Node n4 = Node(root, best_4.x, best_4.y, player);
+                            int val_4 = n4.calculate();
+                            if(val_1>val_4) {
+                                x = best_1.x; y = best_1.y;
+                            }
+                            else {
+                                x = best_4.x; y = best_4.y;
+                            }
+                        }
+                        else {
+                            x = best_1.x;
+                            y = best_1.y;
+                        }
+                        
                     }
                     else {
-                        x = best_2.x;
-                        y = best_2.y;
-                    }
-                    
+                        if(best_4.x!=-1) {
+                            Node n4 = Node(root, best_4.x, best_4.y, player);
+                            int val_4 = n4.calculate();
+                            if(val_2>val_4) {
+                                x = best_2.x; y = best_2.y;
+                            }
+                            else {
+                                x = best_4.x; y = best_4.y;
+                            }
+                        }
+                        else {
+                            x = best_2.x;
+                            y = best_2.y;
+                        }   
+                    }   
                 }
                 else {
                     x = best_1.x;
