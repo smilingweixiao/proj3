@@ -108,7 +108,7 @@ struct Node {
         for(int i = 0; i < 4; i++) {
             flag = 1;
             int new_x = last_put.x+dx[i], new_y = last_put.y+dy[i];
-            int count = 1, lock = 0;
+            int count = 1, lock = 2;
             while(new_x >= 0 && new_x < SIZE 
             && new_y >= 0 && new_y < SIZE) {
                 if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
@@ -118,6 +118,7 @@ struct Node {
                     if(count>=5) return INT32_MAX;
                 }
                 else if(bd[new_x][new_y] == EMPTY) {
+                    lock--;
                     break;
                 }
                 else {
@@ -127,15 +128,14 @@ struct Node {
                     else {
                         val-=2;
                     }
-                    lock++;
                     break;
                 }
             }
             
             new_x = last_put.x-dx[i], new_y = last_put.y-dy[i];
+            int flag_1 = 0, flag_2 = 0;
             while(new_x >= 0 && new_x < SIZE 
             && new_y >= 0 && new_y < SIZE) {
-                flag = 0;
                 if(bd[new_x][new_y] == bd[last_put.x][last_put.y]) {
                     new_x-=dx[i];
                     new_y-=dy[i];
@@ -143,16 +143,43 @@ struct Node {
                     if(count>=5) return INT32_MAX;
                 }
                 else if(bd[new_x][new_y] == EMPTY) {
+                    lock--;
                     if(lock==0 && count ==4) return INT32_MAX;
-                    else if(lock==0 && count ==3) val+=20;
-                    else if(lock==1 && count==4) val+=20;
-                    else if(lock==0 && count==2) val+=2;
+                    else if(lock==0 && count ==3) val+=25;
+                    else if(lock==1 && count==4) val+=25;
+                    else if(lock==0 && count==1) {
+                        if(new_x+4*dx[i]>=0 && new_x+4*dx[i]<SIZE && new_y+4*dy[i]>=0 && new_y+4*dy[i]<SIZE){
+                            if(val>=2 && bd[new_x+4*dx[i]][new_y+4*dy[i]]==EMPTY && bd[new_x+3*dx[i]][new_y+3*dy[i]]==bd[last_put.x][last_put.y]) {
+                                if(flag_2) {
+                                    flag_2 = 0;
+                                    val+=15;
+                                }
+                                flag_1 = 1;
+                            }
+                        }
+                        if(new_x-4*dx[i]>=0 && new_x-4*dx[i]<SIZE && new_y-4*dy[i]>=0 && new_y-4*dy[i]<SIZE){
+                            if(val>=2 && bd[new_x-4*dx[i]][new_y-4*dy[i]]==EMPTY && bd[new_x-3*dx[i]][new_y-3*dy[i]]==bd[last_put.x][last_put.y]) {
+                                if(flag_2) {
+                                    flag_2 = 0;
+                                    val+=15;
+                                }
+                                flag_1 = 1;
+                            }
+                        }
+                    }
+                    else if(lock==0 && count==2){
+                        val+=4;
+                        if(flag_1) {
+                            flag_1 = 0;
+                            val+=15;
+                        }
+                        flag_2 = 1;
+                    } 
                     else if(lock==1 && count==2 && (i==2||i==3)) val+=2;
                     else if(lock==1 && count==2) val+=1;
                     break;
                 }
                 else {
-                    lock++;
                     if(lock==1 && count==4) val+=20;
                     else if(lock==1 && count>=2 && (i==0 || i==1)) val+=1;
                     else if(lock==1 && count>=2) val+=2;
@@ -163,28 +190,49 @@ struct Node {
             }
         
             if(flag) {
-                if(lock==0 && count==4) val+=20;
+                if(lock==0 && count==4) val+=25;
             }
         
         }
         
         int enemys = 0;
+        int count = 0;
         for(int i = 0; i < 4; i++) {
 
-            int new_x = last_put.x+2*dx[i], new_y = last_put.y+2*dy[i];
-            if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE)
-            if(bd[last_put.x+dx[i]][last_put.y+dy[i]]==bd[new_x][new_y] && bd[new_x][new_y]==opponent) {
-                enemys++;
-            }
-            
-            new_x = last_put.x-2*dx[i], new_y = last_put.y-2*dy[i];
+            int new_x = last_put.x+dx[i], new_y = last_put.y+dy[i];
             if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) 
-            if(bd[last_put.x-dx[i]][last_put.y-dy[i]]==bd[new_x][new_y] && bd[new_x][new_y]==opponent) {
-                enemys++;
-            }
+                if(bd[new_x][new_y]!=bd[last_put.x][last_put.y]&&bd[new_x][new_y]!=EMPTY) {
+                    new_x+=dx[i]; new_y+=dy[i];
+                    count++;
+                }
+                    
+                
+            if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) 
+                if(bd[new_x][new_y]!=bd[last_put.x][last_put.y]&&bd[new_x][new_y]!=EMPTY) {
+                    new_x+=dx[i]; new_y+=dy[i];
+                    count++;
+                }
+                    
+            
+            
+            new_x = last_put.x-dx[i], new_y = last_put.y-dy[i];
+            if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) 
+                if(bd[new_x][new_y]!=bd[last_put.x][last_put.y]&&bd[new_x][new_y]!=EMPTY) {
+                    new_x-=dx[i]; new_y-=dy[i];
+                    count++;
+                }
+
+            if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) 
+                if(bd[new_x][new_y]!=bd[last_put.x][last_put.y]&&bd[new_x][new_y]!=EMPTY) {
+                    new_x-=dx[i]; new_y-=dy[i];
+                    count++;
+                }
+                    
+    
+            if(count>=2) enemys++;
         }
         if(enemys >= 2) val+=30;
-        else if(enemys >= 1) val+=5;
+        else if(enemys >= 1) val+=15;
         return val;
     }
     void which_to_go() {
@@ -390,10 +438,15 @@ Point best_2;
 Node root = Node();
 
 bool check() {
+
+    Point douthr;
+    douthr.x = -1;
+    douthr.y = -1;
     //勝利
-    int new_x, new_y, count, lock, k;
+    int new_x, new_y, count, lock, k, douthree;
     for(int i = 0; i < SIZE; i++) {
         for(int j = 0; j < SIZE; j++) {
+            douthree = 0;
             for(int k = 0; k < 4; k++) {
                 count = 1;
                 if(board[i][j] != EMPTY) break;
@@ -424,14 +477,17 @@ bool check() {
     }
 
     //需擋有空格
+    
     for(int i = 0; i < SIZE; i++) {
         for(int j = 0; j < SIZE; j++) {
+            douthree = 0;
             for(int k = 0; k < 4; k++) {
-                count = 1;
+                count = 1, lock = 2;
                 if(board[i][j] != EMPTY) break;
                 new_x = i+dx[k];
                 new_y = j+dy[k];
                 while(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
+                    if(board[new_x][new_y] == EMPTY) lock--;
                     if(board[new_x][new_y] != opponent) break;
                     count++;
                     new_x+=dx[k];
@@ -440,6 +496,7 @@ bool check() {
                 new_x = i-dx[k];
                 new_y = j-dy[k];
                 while(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
+                    if(board[new_x][new_y] == EMPTY) lock--;
                     if(board[new_x][new_y] != opponent) break;
                     count++;
                     new_x-=dx[k];
@@ -449,6 +506,13 @@ bool check() {
                     best_1.x = i;
                     best_1.y = j;
                     return true;
+                }
+                if(count==3 && lock==0) {
+                    if(douthree) {
+                        douthr.x = i;
+                        douthr.y = j;
+                    }
+                    douthree++;
                 }
                     
             }
@@ -845,6 +909,12 @@ bool check() {
         }
         i = k;
     }
+    
+    if(douthr.x != -1) {
+        best_1.x = douthr.x;
+        best_1.y = douthr.y;
+        return true;
+    }
 
     return false;
 }
@@ -860,18 +930,18 @@ int alphabeta(Node node, int d) {
     int len = node.possible_x.size();
     int ori = node.calculate();
     if(node.user == player) {
-        int val = INT32_MIN;
+        int val = -ori;//INT32_MIN;
         for(int i = 0; i < len; i++) {
-            val = max(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], player), d-1))+ori;
+            val = max(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], player), d-1));
             node.alpha = max(node.alpha, val);
             if(node.alpha >= node.beta) break;
         }
         return val;
     }
     else {
-        int val = INT32_MAX;
+        int val = ori;//INT32_MAX;
         for(int i = 0; i < len; i++) {
-            val = min(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], opponent), d-1))+ori;
+            val = min(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], opponent), d-1));
             node.beta = min(node.beta, val);
             if(node.alpha >= node.beta) break;
         }
