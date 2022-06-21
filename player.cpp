@@ -24,7 +24,7 @@ int player;
 int opponent;
 const int SIZE = 15;
 std::array<std::array<int, SIZE>, SIZE> board;
-int depth = 3;
+int depth = 5;
 int first;
 Point bl;
 
@@ -145,7 +145,7 @@ struct Node {
                 else if(bd[new_x][new_y] == EMPTY) {
                     if(lock==0 && count ==4) return INT32_MAX;
                     else if(lock==0 && count ==3) val+=20;
-                    else if(lock<=1 && count==4) val+=20;
+                    else if(lock==1 && count==4) val+=20;
                     else if(lock==0 && count==2) val+=2;
                     else if(lock==1 && count==2 && (i==2||i==3)) val+=2;
                     else if(lock==1 && count==2) val+=1;
@@ -173,13 +173,13 @@ struct Node {
 
             int new_x = last_put.x+2*dx[i], new_y = last_put.y+2*dy[i];
             if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE)
-            if(bd[last_put.x+dx[i]][last_put.y+dy[i]]==bd[new_x][new_y] && bd[new_x][new_y]==bd[last_put.x][last_put.y]) {
+            if(bd[last_put.x+dx[i]][last_put.y+dy[i]]==bd[new_x][new_y] && bd[new_x][new_y]==opponent) {
                 enemys++;
             }
             
             new_x = last_put.x-2*dx[i], new_y = last_put.y-2*dy[i];
             if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) 
-            if(bd[last_put.x-dx[i]][last_put.y-dy[i]]==bd[new_x][new_y] && bd[new_x][new_y]==bd[last_put.x][last_put.y]) {
+            if(bd[last_put.x-dx[i]][last_put.y-dy[i]]==bd[new_x][new_y] && bd[new_x][new_y]==opponent) {
                 enemys++;
             }
         }
@@ -409,6 +409,38 @@ bool check() {
                 new_y = j-dy[k];
                 while(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
                     if(board[new_x][new_y] != player) break;
+                    count++;
+                    new_x-=dx[k];
+                    new_y-=dy[k];
+                }
+                if(count >= 5) {
+                    best_1.x = i;
+                    best_1.y = j;
+                    return true;
+                }
+                    
+            }
+        }
+    }
+
+    //需擋有空格
+    for(int i = 0; i < SIZE; i++) {
+        for(int j = 0; j < SIZE; j++) {
+            for(int k = 0; k < 4; k++) {
+                count = 1;
+                if(board[i][j] != EMPTY) break;
+                new_x = i+dx[k];
+                new_y = j+dy[k];
+                while(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
+                    if(board[new_x][new_y] != opponent) break;
+                    count++;
+                    new_x+=dx[k];
+                    new_y+=dy[k];
+                }
+                new_x = i-dx[k];
+                new_y = j-dy[k];
+                while(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
+                    if(board[new_x][new_y] != opponent) break;
                     count++;
                     new_x-=dx[k];
                     new_y-=dy[k];
@@ -826,10 +858,11 @@ int alphabeta(Node node, int d) {
     }
     if(d == 0) return node.calculate();
     int len = node.possible_x.size();
+    int ori = node.calculate();
     if(node.user == player) {
         int val = INT32_MIN;
         for(int i = 0; i < len; i++) {
-            val = max(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], player), d-1));
+            val = max(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], player), d-1))+ori;
             node.alpha = max(node.alpha, val);
             if(node.alpha >= node.beta) break;
         }
@@ -838,7 +871,7 @@ int alphabeta(Node node, int d) {
     else {
         int val = INT32_MAX;
         for(int i = 0; i < len; i++) {
-            val = min(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], opponent), d-1));
+            val = min(val, alphabeta(Node(node, node.possible_x[i], node.possible_y[i], opponent), d-1))+ori;
             node.beta = min(node.beta, val);
             if(node.alpha >= node.beta) break;
         }
@@ -908,7 +941,7 @@ void write_valid_spot(std::ofstream& fout) {
             else {
                 int val = INT32_MIN;
                 root.possible_x.clear(); root.possible_y.clear();
-                for(int i = 0;i < SIZE;i++) {
+                for(int i = 5;i < SIZE;i++) {
                 for(int j = 0;j < SIZE;j++) {
                     //if(root.bd[i][j] == EMPTY) {
                     //    root.possible_x.push_back(i);
@@ -965,6 +998,74 @@ void write_valid_spot(std::ofstream& fout) {
                         }
                     }
                 }
+                }
+                for(int i = 0;i < 5;i++) {
+                for(int j = 0;j < SIZE;j++) {
+                    //if(root.bd[i][j] == EMPTY) {
+                    //    root.possible_x.push_back(i);
+                    //    root.possible_y.push_back(j);
+                    //}
+                    if(root.bd[i][j] == player) {
+                        if(i-1 >= 0) {
+                            if(root.bd[i-1][j] == EMPTY) {
+                                root.possible_x.push_back(i-1);
+                                root.possible_y.push_back(j);
+                            }
+                        }
+                        if(i+1 < SIZE) {
+                            if(root.bd[i+1][j] == EMPTY) {
+                                root.possible_x.push_back(i+1);
+                                root.possible_y.push_back(j);
+                            }
+                        }
+                        if(j-1 >= 0) {
+                            if(root.bd[i][j-1] == EMPTY) {
+                                root.possible_x.push_back(i);
+                                root.possible_y.push_back(j-1);
+                            } 
+                        }
+                        if(j+1 < SIZE) {
+                            if(root.bd[i][j+1] == EMPTY) {
+                                root.possible_x.push_back(i);
+                                root.possible_y.push_back(j+1);
+                            }
+                        }
+                        if(i-1 >= 0 && j-1 >= 0) {
+                            if(root.bd[i-1][j-1] == EMPTY) {
+                                root.possible_x.push_back(i-1);
+                                root.possible_y.push_back(j-1);
+                            }                            
+                        }
+                        if(i-1 >= 0 && j+1 < SIZE) {
+                            if(root.bd[i-1][j+1] == EMPTY) {
+                                root.possible_x.push_back(i-1);
+                                root.possible_y.push_back(j+1);
+                            }                            
+                        }
+                        if(i+1 < SIZE && j-1 >= 0) {
+                            if(root.bd[i+1][j-1] == EMPTY) {
+                                root.possible_x.push_back(i+1);
+                                root.possible_y.push_back(j-1);
+                            }                            
+                        }
+                        if(i+1 < SIZE && j+1 < SIZE) {
+                            if(root.bd[i+1][j+1] == EMPTY) {
+                                root.possible_x.push_back(i+1);
+                                root.possible_y.push_back(j+1);
+                            }
+                        }
+                    }
+                }
+                }
+                if(root.possible_x.empty()) {
+                    for(int i = 0; i < SIZE; i++) {
+                        for(int j = 0; j < SIZE; j++) {
+                            if(root.bd[i][j] == EMPTY) {
+                                root.possible_x.push_back(i);
+                                root.possible_y.push_back(j);
+                            }
+                        }
+                    }
                 }
                 int len = root.possible_x.size();
                 for(int i = 0; i < len; i++) {
