@@ -26,6 +26,7 @@ const int SIZE = 15;
 std::array<std::array<int, SIZE>, SIZE> board;
 int depth = 3;
 int first;
+Point bl;
 
 struct Node {
     std::array<std::array<int, SIZE>, SIZE> bd;    //bd
@@ -36,6 +37,21 @@ struct Node {
     vector<int> possible_x;
     vector<int> possible_y;
     //compare
+
+    void operator=(const Node& rhs) {
+        for(int i = 0; i < SIZE; i++) {
+            for(int j = 0; j < SIZE; j++) {
+                bd[i][j] = rhs.bd[i][j];
+            }
+        }
+        alpha = rhs.alpha; beta = rhs.beta;
+        user = rhs.user;
+        end = rhs.end;
+        last_put.x = rhs.last_put.x;
+        last_put.y = rhs.last_put.y;
+        possible_x = rhs.possible_x;
+        possible_y = rhs.possible_y;
+    }
     Node (const Node& rhs) {
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
@@ -99,6 +115,7 @@ struct Node {
                     new_x+=dx[i];
                     new_y+=dy[i];
                     count++;
+                    if(count>=5) return INT32_MAX;
                 }
                 else if(bd[new_x][new_y] == EMPTY) {
                     break;
@@ -123,9 +140,11 @@ struct Node {
                     new_x-=dx[i];
                     new_y-=dy[i];
                     count++;
+                    if(count>=5) return INT32_MAX;
                 }
                 else if(bd[new_x][new_y] == EMPTY) {
-                    if(lock==0 && count ==3) val+=20;
+                    if(lock==0 && count ==4) return INT32_MAX;
+                    else if(lock==0 && count ==3) val+=20;
                     else if(lock<=1 && count==4) val+=20;
                     else if(lock==0 && count==2) val+=2;
                     else if(lock==1 && count==2 && (i==2||i==3)) val+=2;
@@ -148,40 +167,65 @@ struct Node {
             }
         
         }
+        
+        int enemys = 0;
+        for(int i = 0; i < 4; i++) {
+
+            int new_x = last_put.x+2*dx[i], new_y = last_put.y+2*dy[i];
+            if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE)
+            if(bd[last_put.x+dx[i]][last_put.y+dy[i]]==bd[new_x][new_y] && bd[new_x][new_y]==bd[last_put.x][last_put.y]) {
+                enemys++;
+            }
+            
+            new_x = last_put.x-2*dx[i], new_y = last_put.y-2*dy[i];
+            if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) 
+            if(bd[last_put.x-dx[i]][last_put.y-dy[i]]==bd[new_x][new_y] && bd[new_x][new_y]==bd[last_put.x][last_put.y]) {
+                enemys++;
+            }
+        }
+        if(enemys >= 2) val+=30;
+        else if(enemys >= 1) val+=5;
         return val;
     }
     void which_to_go() {
         possible_x.clear();
         possible_y.clear();
         //連線
-        int new_x, new_y;
+        int new_x, new_y, count, lock, judge = 0;
         for(int i = 0; i < SIZE-4; i++) {
             for(int j = 0; j < SIZE-4; j++) {
+                count = 1, lock = 2;
                 for(int k = 0; k < 4; k++) {
-                    new_x = i+3*dx[k];
-                    new_y = j+3*dy[k];
-                    if(bd[i][j] != user) continue;
-                    if(new_x<0 || new_y<0 || new_x>=SIZE || new_y>=SIZE) continue;
-                    if(user == bd[i+dx[k]][j+dy[k]] && user == bd[i+2*dx[k]][j+2*dy[k]] && user == bd[i+3*dx[k]][j+3*dy[k]]) {
-                        if(i-dx[k]>=0 && i-dx[k]<SIZE && j-dy[k]>=0 && j-dy[k]<SIZE) {
-                            if(bd[i-dx[k]][j-dy[k]] == EMPTY) {
-                                possible_x.push_back(i-dx[k]); possible_y.push_back(j-dy[k]);
-                                return;
-                            }
-                        }
-                        if(new_x+dx[k]>=0 && new_x+dx[k]<SIZE && new_y+dy[k]>=0 && new_y+dy[k]<SIZE) {
-                            if(bd[new_x+dx[k]][new_y+dy[k]] == EMPTY) {
-                                possible_x.push_back(new_x+dx[k]); possible_y.push_back(new_y+dy[k]);
-                                return;
-                            }
-                        }
+                    if(bd[i][j] != EMPTY) break;
+                    new_x = i+dx[k];
+                    new_y = j+dy[k];
+                    while(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
+                        if(bd[new_x][new_y] != user) break;
+                        count++;
+                        new_x+=dx[k];
+                        new_y+=dy[k];
                     }
+                    new_x = i-dx[k];
+                    new_y = j-dy[k];
+                    while(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
+                        if(bd[new_x][new_y] != user) break;
+                        count++;
+                        new_x-=dx[k];
+                        new_y-=dy[k];
+                    }
+                    if(count >= 5) {
+                        possible_x.clear();
+                        possible_y.clear();
+                        possible_x.push_back(i);
+                        possible_y.push_back(j);
+                        return;
+                    }
+                    
                 }
             }
         }
 
         //堵路
-        int count, lock, judge = 0;
         for(int k = 0; k < 4; k++) {
             count = 1, lock = 0;
             new_x = last_put.x+dx[k]; new_y = last_put.y+dy[k];
@@ -192,6 +236,7 @@ struct Node {
                 else if(bd[new_x][new_y]==EMPTY) {
                     if(count==4) {
                         judge++;
+                        possible_x.clear(); possible_y.clear();
                         possible_x.push_back(new_x); possible_y.push_back(new_y);
                         break;
                     }
@@ -211,6 +256,7 @@ struct Node {
                     //活三
                     if(lock==0 && count==3) {
                         judge++;
+                        possible_x.clear(); possible_y.clear();
                         possible_x.push_back(new_x); possible_y.push_back(new_y);
                         possible_x.push_back(new_x+4*dx[k]); possible_y.push_back(new_y+4*dy[k]);
                         break;
@@ -218,16 +264,20 @@ struct Node {
                     //死四
                     if(lock<=1 && count==4) {
                         judge++;
+                        possible_x.clear(); possible_y.clear();
                         possible_x.push_back(new_x); possible_y.push_back(new_y);
                         break;
                     }
                     //變形活三
+                    //活二
                     if(lock==0 && count==2) {
                         int new2_x = new_x-2*dx[k], new2_y = new_y-2*dy[k];
                         int new3_x = new_x+5*dx[k], new3_y = new_x+5*dy[k];
+                        int new4_x = new_x+3*dx[k], new4_y = new_y+3*dy[k];
                         if(new2_x>=0 && new2_x<SIZE && new2_y>=0 && new2_y<SIZE) {
                             if(bd[new2_x][new2_y] == EMPTY) {
                                 judge++;
+                                possible_x.clear(); possible_y.clear();
                                 possible_x.push_back(new_x); possible_y.push_back(new_y);
                                 break;
                             }
@@ -235,11 +285,17 @@ struct Node {
                         if(new3_x>=0 && new3_x<SIZE && new3_y>=0 && new3_y<SIZE) {
                             if(bd[new3_x][new3_y] == EMPTY) {
                                 judge++;
+                                possible_x.clear(); possible_y.clear();
                                 possible_x.push_back(last_put.x+dx[k]); possible_y.push_back(last_put.y+dy[k]);
                                 break;
                             }
                         }
-
+                        possible_x.push_back(new_x);
+                        possible_y.push_back(new_y);
+                        if(new4_x>=0 && new4_x<SIZE && new4_y>=0 && new4_y<SIZE) {
+                            possible_x.push_back(new4_x);
+                            possible_y.push_back(new4_y);
+                        }
                     }
                 }
                 else {
@@ -263,9 +319,13 @@ struct Node {
             }
         }
         
-        if(possible_x.empty()) {
+        if(judge == 0) {
             for(int i = 0;i < SIZE;i++) {
                 for(int j = 0;j < SIZE;j++) {
+                    //if(bd[i][j] == EMPTY) {
+                    //    possible_x.push_back(i);
+                    //    possible_y.push_back(j);
+                    //}
                     if(bd[i][j] == user) {
                         if(i-1 >= 0) {
                             if(bd[i-1][j] == EMPTY) {
@@ -327,10 +387,44 @@ struct Node {
 //判斷是否防禦
 Point best_1;
 Point best_2;
+Node root = Node();
 
 bool check() {
+    //勝利
+    int new_x, new_y, count, lock, k;
+    for(int i = 0; i < SIZE; i++) {
+        for(int j = 0; j < SIZE; j++) {
+            for(int k = 0; k < 4; k++) {
+                count = 1;
+                if(board[i][j] != EMPTY) break;
+                new_x = i+dx[k];
+                new_y = j+dy[k];
+                while(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
+                    if(board[new_x][new_y] != player) break;
+                    count++;
+                    new_x+=dx[k];
+                    new_y+=dy[k];
+                }
+                new_x = i-dx[k];
+                new_y = j-dy[k];
+                while(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
+                    if(board[new_x][new_y] != player) break;
+                    count++;
+                    new_x-=dx[k];
+                    new_y-=dy[k];
+                }
+                if(count >= 5) {
+                    best_1.x = i;
+                    best_1.y = j;
+                    return true;
+                }
+                    
+            }
+        }
+    }
+    
     //橫
-    int lock = 0, count = 0, k = 0;
+    lock = 0; count = 0; k = 0;
     for(int i = 0; i < SIZE; i++){
         lock = 0; count = 0;
         for(int j = 0; j < SIZE; j++) {
@@ -373,6 +467,8 @@ bool check() {
                             return true;
                         }
                     }
+                    root.possible_x.push_back(i); root.possible_y.push_back(j);
+                    root.possible_x.push_back(i); root.possible_y.push_back(j-3);
                 }
                 count = 0;
                 lock = 0;
@@ -435,6 +531,8 @@ bool check() {
                             return true;
                         }
                     }
+                    root.possible_x.push_back(i); root.possible_y.push_back(j);
+                    root.possible_x.push_back(i-3); root.possible_y.push_back(j);
                 }
                 count = 0;
                 lock = 0;
@@ -499,6 +597,8 @@ bool check() {
                             return true;
                         }
                     }
+                    root.possible_x.push_back(i); root.possible_y.push_back(j);
+                    root.possible_x.push_back(i-3); root.possible_y.push_back(j-3);
                 }
                 count = 0;
                 lock = 0;
@@ -562,6 +662,8 @@ bool check() {
                             return true;
                         }
                     }
+                    root.possible_x.push_back(i); root.possible_y.push_back(j);
+                    root.possible_x.push_back(i-3); root.possible_y.push_back(j-3);
                 }
                 count = 0;
                 lock = 0;
@@ -626,6 +728,8 @@ bool check() {
                             return true;
                         }
                     }
+                    root.possible_x.push_back(i); root.possible_y.push_back(j);
+                    root.possible_x.push_back(i-3); root.possible_y.push_back(j+3);
                 }
                 count = 0;
                 lock = 0;
@@ -646,7 +750,7 @@ bool check() {
     }
 
     lock = 0; count = 0;
-    for(int i = 0; i < SIZE; i++){
+    for(int i = 1; i < SIZE; i++){
         lock = 0; count = 0;
         k = i;
         for(int j = SIZE-1; i < SIZE && j >= 0 ; i++,j--) {
@@ -673,6 +777,25 @@ bool check() {
                     best_1.x = i; best_1.y = j;
                     return true;
                 }
+                //活三變形
+                else if(lock==0 && count==2) {
+                    if(j-1 >= 0 && i+1 <SIZE) {
+                        if(board[i+1][j-1] == opponent) {
+                            best_1.x = i;
+                            best_1.y = j;
+                            return true;
+                        }
+                    }
+                    if(j+4 < SIZE && i-4 >= 0) {
+                        if(board[i-4][j+4] == opponent) {
+                            best_1.x = i-3;
+                            best_1.y = j+3;
+                            return true;
+                        }
+                    }
+                    root.possible_x.push_back(i); root.possible_y.push_back(j);
+                    root.possible_x.push_back(i-3); root.possible_y.push_back(j+3);
+                }
                 count = 0;
                 lock = 0;
             }
@@ -693,8 +816,6 @@ bool check() {
 
     return false;
 }
-
- 
 
 
 int alphabeta(Node node, int d) {
@@ -728,14 +849,19 @@ int alphabeta(Node node, int d) {
 void read_board(std::ifstream& fin) {
     first = 1;
     fin >> player;
+    if(player == BLACK) opponent = WHITE;
+    else opponent = BLACK;
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             fin >> board[i][j];
-            if(board[i][j] != EMPTY) first = 0;
+            if(board[i][j] == player) first = 0;
+            if(board[i][j] == opponent) {
+                bl.x = i;
+                bl.y = j;
+            }
         }
     }
-    if(player == BLACK) opponent = WHITE;
-    else opponent = BLACK;
+    
 }
 
 
@@ -746,13 +872,18 @@ void write_valid_spot(std::ofstream& fout) {
     while(true) {
         // Choose a random spot.
         int x, y;
-        Node root;
+        root = Node();
         best_1.x = -1; best_1.y = -1;
         best_2.x = -1; best_2.y = -1;
         if(first && player == BLACK) {
             x = 7, y = 7;
         }
+        else if(first && player == WHITE) {
+            if(bl.x+2>=0 && bl.x+2<SIZE && bl.y+2 >=0 && bl.y+2 < SIZE) {x = bl.x+2; y = bl.y+2;}
+            else if(bl.x-2>=0 && bl.x-2<SIZE && bl.y-2 >=0 && bl.y-2 < SIZE) {x = bl.x-2; y = bl.y-2;}
+        }
         else {
+            
             if(check()) {
                 if(best_2.x != -1) {
                     Node n1 = Node(root, best_1.x, best_1.y, player);
@@ -779,6 +910,10 @@ void write_valid_spot(std::ofstream& fout) {
                 root.possible_x.clear(); root.possible_y.clear();
                 for(int i = 0;i < SIZE;i++) {
                 for(int j = 0;j < SIZE;j++) {
+                    //if(root.bd[i][j] == EMPTY) {
+                    //    root.possible_x.push_back(i);
+                    //    root.possible_y.push_back(j);
+                    //}
                     if(root.bd[i][j] == player) {
                         if(i-1 >= 0) {
                             if(root.bd[i-1][j] == EMPTY) {
