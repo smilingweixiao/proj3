@@ -184,7 +184,7 @@ struct Node {
                     else if(lock==1 && count==2 && (i==0 || i==1)) val+=1;
                     else if(lock==1 && count==3 && (i==0 || i==1)) val+=3;
                     else if(lock==1 && count==2) val+=2;
-                    else if(lock==1 && count==3) val+=5;
+                    else if(lock==1 && count==3) val+=4;
                     //else if(lock==1 && (i==0||i==1)) val-=1;
                     //else if(lock==1) val-=2;
                     break;
@@ -199,7 +199,6 @@ struct Node {
         
         int enemys = 0;
         int count = 0;
-        int hole = 0;
         for(int i = 0; i < 4; i++) {
             count = 0;
             int new_x = last_put.x+dx[i], new_y = last_put.y+dy[i];
@@ -211,7 +210,6 @@ struct Node {
                     
                 
             if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
-                if(bd[new_x][new_y]==EMPTY) hole++;
                 if(bd[new_x][new_y]!=bd[last_put.x][last_put.y]&&bd[new_x][new_y]!=EMPTY) {
                     new_x+=dx[i]; new_y+=dy[i];
                     count++;
@@ -227,18 +225,18 @@ struct Node {
                 }
 
             if(new_x>=0 && new_x<SIZE && new_y>=0 && new_y<SIZE) {
-                if(bd[new_x][new_y]==EMPTY) hole++; 
                 if(bd[new_x][new_y]!=bd[last_put.x][last_put.y]&&bd[new_x][new_y]!=EMPTY) {
                     new_x-=dx[i]; new_y-=dy[i];
                     count++;
                 }
             }
             //堵活三        
-            if(hole==2 && count==2)val+=15;
             if(count>=2) enemys++;
         }
         //雙三
         if(enemys >= 2) val+=30;
+        else if(enemys >= 1) val+=15;
+
         return val;
     }
     void which_to_go() {
@@ -919,7 +917,6 @@ bool check() {
 
     lock = 0; count = 0;
     for(int i = 1; i < SIZE; i++){
-        //cout<<"six"<<endl;
         lock = 0; count = 0;
         k = i;
         for(int j = SIZE-1; i < SIZE && j >= 0 ; i++,j--) {
